@@ -1,57 +1,52 @@
 // Observation hook for the E2E suite. Only ever loaded from the
 // NEXT_PUBLIC_AA_TEST_MODE === "1" branch in Classroom.tsx, so it is absent
-// from a normal build. Coordinates use the footprint's top-left corner.
+// from a normal build. Coordinates are layout.ts meters.
 
-import type { AgentProfile } from "@/shared/contracts";
 import { useAppStore } from "@/shared/state/appStore";
-import type { ClassroomScene } from "./ClassroomScene";
-import { MOVE_WORLD, TEACHER_COLLIDER, WORLD_HEIGHT, WORLD_WIDTH } from "./world";
+import { BOX_COLLIDERS, CIRCLE_COLLIDERS, ROOM } from "@/shared/world/layout";
+import type { AvatarFrameStatus } from "./AvatarFrame";
+import type { FirstPersonController } from "./controller";
 
-type HookSource = {
-  scene: () => ClassroomScene | null;
-  sceneReady: () => boolean;
-  /** undefined until the first avatar decision; null when settled on no avatar. */
-  settledAvatarUrl: () => string | null | undefined;
-  agent: () => AgentProfile | null;
-  paused: () => boolean;
+interface HookSource {
+  controller: FirstPersonController;
+  /** True once the world has rendered a frame. */
+  worldReady: () => boolean;
+  avatarFrame: () => AvatarFrameStatus;
   remount: () => void;
-};
+}
 
 // Local view of the global. tests/e2e/support owns the typed global declaration.
 type TestWindow = { __AA_TEST__?: { classroom?: unknown } };
 
 export function installClassroomTestHook(source: HookSource): () => void {
-  const { halfW, halfH } = MOVE_WORLD.footprint;
+  const { controller } = source;
 
   const hook = {
-    /** True once the room is drawn and the current agent's avatar is settled. */
+    /** True once the room is drawn and the current agent's picture frame is settled. */
     ready(): boolean {
-      const store = useAppStore.getState();
-      if (store.agentLoad !== "ready" && store.agentLoad !== "failed") return false;
-      if (!source.sceneReady()) return false;
-      return source.settledAvatarUrl() === (store.agent?.avatar?.renderUrl ?? null);
+      const { agentLoad } = useAppStore.getState();
+      if (agentLoad !== "ready" && agentLoad !== "failed") return false;
+      return source.worldReady() && source.avatarFrame() !== "loading";
     },
     snapshot() {
-      const view = source.scene()?.inspect();
-      if (!view) throw new Error("classroom scene is not running");
-      const agent = source.agent();
       return {
-        footprint: { x: view.actor.x - halfW, y: view.actor.y - halfH, w: halfW * 2, h: halfH * 2 },
-        world: { w: WORLD_WIDTH, h: WORLD_HEIGHT },
-        obstacles: MOVE_WORLD.obstacles,
-        teacher: { x: TEACHER_COLLIDER.x, y: TEACHER_COLLIDER.y },
-        moving: view.actor.moving,
-        paused: source.paused(),
-        screen: view.playerScreen,
-        agent: {
-          agentId: agent?.agentId ?? null,
-          selectedModelId: agent?.selectedModel?.modelId ?? null,
-          avatarSource: view.avatarSource,
-        },
+        position: { x: controller.x, z: controller.z },
+        yaw: controller.yaw,
+        pitch: controller.pitch,
+        moving: controller.moving,
+        paused: controller.locked,
+        pointerLocked: controller.pointerLocked,
+        target: controller.target,
+        world: { ROOM },
+        colliders: { boxes: BOX_COLLIDERS, circles: CIRCLE_COLLIDERS },
+        avatarFrame: source.avatarFrame(),
       };
     },
-    teleport(x: number, y: number): void {
-      source.scene()?.teleport({ x: x + halfW, y: y + halfH });
+    teleport(x: number, z: number, yaw?: number): void {
+      controller.teleport(x, z, yaw);
+    },
+    setLook(yaw: number, pitch: number): void {
+      controller.setLook(yaw, pitch);
     },
     remount(): void {
       source.remount();
