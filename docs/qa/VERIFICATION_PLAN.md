@@ -19,7 +19,7 @@
 | 영역 | 수용 기준 | 사례 | 등급 | 파일 |
 | --- | --- | --- | --- | --- |
 | 이동·충돌·입력 해제 | A-01~03 | C1~C11 | BROWSER | `tests/e2e/classroom-movement.spec.ts` |
-| 외형과 모델 연결 | A-04 | V1~V5 | BROWSER (카탈로그 검색만 대역) | `tests/e2e/avatar-model-link.spec.ts` |
+| 외형과 모델 연결 | A-04 | V1~V6 | BROWSER (카탈로그 검색만 대역) | `tests/e2e/avatar-model-link.spec.ts` |
 | 말풍선·버튼·가림·겹침 | A-01~03, A-13 일부 | R1~R4, O1, N1~N4 | BROWSER | `tests/e2e/classroom-surface.spec.ts` |
 | 모델 변경 후 상담 문맥 | A-06, A-07 일부 | M1~M8 | FIXTURE | `tests/integration/teacher-context.test.ts` |
 | 가격 실패·미확인 값 | A-08 일부 | P1~P6, U1~U3 | FIXTURE | `tests/integration/pricing.test.ts`, `tests/e2e/learning-truth.spec.ts` |
@@ -80,7 +80,7 @@ FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 �
 
 실행 전에 `rm -rf .next-e2e .data/e2e`를 한다. 낡은 캐시에서는 페이지가 계속 다시 로드되어 `waitClassroomReady`가 시간 초과된다(ENV-3).
 
-대상 커밋별 결과는 `docs/qa/RESULTS-b6ad9a7.md`에 있다.
+대상 커밋별 결과는 `docs/qa/RESULTS-<커밋>.md`에 있다. 최신은 `RESULTS-9ffa6f4.md`다.
 
 ## 7. 계약 초안 대조 결과
 
