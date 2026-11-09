@@ -40,9 +40,9 @@ describe("capability display", () => {
   });
 
   it("keeps yes, no and unknown distinct", () => {
-    expect(claimView(claim("yes"))).toEqual({ tone: "ok", label: "가능" });
-    expect(claimView(claim("no"))).toEqual({ tone: "danger", label: "불가" });
-    expect(claimView(claim("unknown", false))).toEqual({ tone: "unknown", label: "미확인" });
+    expect(claimView(claim("yes"))).toEqual({ tone: "ok", label: "Yes" });
+    expect(claimView(claim("no"))).toEqual({ tone: "danger", label: "No" });
+    expect(claimView(claim("unknown", false))).toEqual({ tone: "unknown", label: "Unknown" });
   });
 
   it("does not present a yes without evidence as confirmed", () => {
@@ -64,7 +64,7 @@ describe("benchmark display", () => {
 
   it("shows a measured zero as zero and null as not measured", () => {
     expect(formatScore(score)).toBe("0 %");
-    expect(formatScore({ ...score, score: null })).toBe("미측정");
+    expect(formatScore({ ...score, score: null })).toBe("Not measured");
   });
 
   it("treats a score missing its task, dataset or source as not comparable", () => {

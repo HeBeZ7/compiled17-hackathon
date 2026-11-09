@@ -9,8 +9,8 @@ import type { AvatarDraftController } from "./useAvatarDraft";
 import styles from "./Avatar.module.css";
 
 const INPUT_KINDS: { kind: AvatarInputKind; label: string }[] = [
-  { kind: "drawing", label: "직접 그리기" },
-  { kind: "photo", label: "사진 넣기" },
+  { kind: "drawing", label: "Draw" },
+  { kind: "photo", label: "Photo" },
 ];
 
 /** Both editors stay mounted so that switching input never loses the other one's work. */
@@ -22,7 +22,7 @@ export function AvatarEditor({ controller }: { controller: AvatarDraftController
   return (
     <div className={styles.avatarEditor}>
       <fieldset className={styles.kindPicker}>
-        <legend>외형 만들기</legend>
+        <legend>Make your appearance</legend>
         {INPUT_KINDS.map((option) => (
           <label key={option.kind} className={styles.kindOption} data-testid={`avatar-mode-${option.kind}`}>
             <input

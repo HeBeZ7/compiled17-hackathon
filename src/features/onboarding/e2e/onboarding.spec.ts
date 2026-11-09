@@ -101,6 +101,14 @@ async function makePhoto(page: Page, type: "image/png" | "image/jpeg", width = 8
   return Buffer.from(base64, "base64");
 }
 
+/** Opens the creation page on the DOM catalog. With WebGL2 available the page starts in the showroom. */
+async function openCreate(page: Page) {
+  await page.goto("/create");
+  await expect(page.getByRole("searchbox")).toBeVisible({ timeout: 60_000 });
+  const toggle = page.getByTestId("showroom-list-toggle");
+  if (await toggle.isVisible()) await toggle.click();
+}
+
 async function drawStroke(page: Page) {
   const canvas = page.getByTestId("avatar-draw-canvas");
   await canvas.scrollIntoViewIfNeeded();
@@ -113,7 +121,7 @@ async function drawStroke(page: Page) {
 }
 
 async function gotoCharacterStep(page: Page) {
-  await page.getByRole("button", { name: /다음: 이름과 외형|모델 없이 다음으로/ }).click();
+  await page.getByRole("button", { name: /Next: name and appearance|Continue without a model/ }).click();
   await expect(page.getByTestId("agent-name")).toBeVisible();
 }
 
@@ -135,22 +143,22 @@ test.beforeEach(async ({ page }) => {
 
 test("catalog: search, paging, empty, failure and per-stage support", async ({ page }) => {
   await useCatalogDouble(page);
-  await page.goto("/create");
+  await openCreate(page);
 
   const card = page.locator(`[data-model-id="${MODEL_A}"]`);
   await expect(card).toBeVisible();
   await expect(card.locator('[data-capability="training"]')).toHaveAttribute("data-support", "no");
-  await expect(card.locator('[data-capability="training"]')).toContainText("불가");
-  await expect(card.locator('[data-capability="inference"]')).toContainText("불가");
-  await expect(card.locator('[data-capability="accessible"]')).toContainText("미확인");
-  await expect(card).toContainText("벤치마크 근거 없음");
-  await expect(card).toContainText("미확인");
-  await expect(page.getByTestId("catalog-provenance")).toContainText("실시간 조회");
+  await expect(card.locator('[data-capability="training"]')).toContainText("No");
+  await expect(card.locator('[data-capability="inference"]')).toContainText("No");
+  await expect(card.locator('[data-capability="accessible"]')).toContainText("Unknown");
+  await expect(card).toContainText("No benchmark evidence");
+  await expect(card).toContainText("Unverified");
+  await expect(page.getByTestId("catalog-provenance")).toContainText("Live");
 
-  await page.getByRole("button", { name: "다음", exact: true }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.locator(`[data-model-id="${MODEL_B}"]`)).toBeVisible();
-  await expect(page.getByText("2쪽")).toBeVisible();
-  await page.getByRole("button", { name: "이전" }).click();
+  await expect(page.getByText("Page 2")).toBeVisible();
+  await page.getByRole("button", { name: "Previous" }).click();
   await expect(card).toBeVisible();
 
   await page.getByRole("searchbox").fill("nothing");
@@ -164,14 +172,14 @@ test("catalog: search, paging, empty, failure and per-stage support", async ({ p
 });
 
 test("catalog: an unconnected service says so and offers no invented models", async ({ page }) => {
-  await page.goto("/create");
+  await openCreate(page);
   await expect(page.getByTestId("connection-notice")).toHaveAttribute("data-code", "NOT_CONNECTED");
   await expect(page.locator("[data-model-id]")).toHaveCount(0);
 });
 
 test("a drawing and the selected model are saved as one agent and restored", async ({ page, context }) => {
   await useCatalogDouble(page);
-  await page.goto("/create");
+  await openCreate(page);
 
   await page.getByTestId(`model-option-${MODEL_A}`).click();
   await expect(page.getByTestId("selected-model")).toContainText(MODEL_A);
@@ -204,9 +212,9 @@ test("a drawing and the selected model are saved as one agent and restored", asy
 
   // Fresh page with the same browser identity: everything comes back from the store.
   const reentry = await context.newPage();
-  await reentry.goto("/create");
+  await openCreate(reentry);
   await expect(reentry.getByTestId("selected-model")).toContainText(MODEL_A);
-  await expect(reentry.getByTestId("selected-model")).toContainText("저장할 때의 정보");
+  await expect(reentry.getByTestId("selected-model")).toContainText("Saved details");
   await gotoCharacterStep(reentry);
   await expect(reentry.getByTestId("agent-name")).toHaveValue("초코");
   await expect(reentry.getByTestId("avatar-preview")).toHaveAttribute("data-selection", "saved");
@@ -221,7 +229,7 @@ test("a drawing and the selected model are saved as one agent and restored", asy
 });
 
 test("a photo is saved, cropped and restored, and bad files are refused", async ({ page }) => {
-  await page.goto("/create");
+  await openCreate(page);
   await gotoCharacterStep(page);
   await page.getByTestId("avatar-mode-photo").click();
   const input = page.getByTestId("avatar-photo-input");
@@ -233,7 +241,7 @@ test("a photo is saved, cropped and restored, and bad files are refused", async 
   // Right signature, unreadable body.
   const corrupt = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64, 7)]);
   await input.setInputFiles({ name: "broken.png", mimeType: "image/png", buffer: corrupt });
-  await expect(problem).toContainText("읽지 못했습니다");
+  await expect(problem).toContainText("Could not read");
 
   await input.setInputFiles({ name: "big.png", mimeType: "image/png", buffer: Buffer.concat([corrupt, Buffer.alloc(8 * 1024 * 1024)]) });
   await expect(problem).toContainText("8MB");
@@ -272,7 +280,7 @@ test("a photo is saved, cropped and restored, and bad files are refused", async 
   expect(original).toMatchObject({ type: "image/jpeg", width: 800, height: 400 });
   expect(original.bluish).toBeGreaterThan(original.total * 0.4);
 
-  await page.goto("/create");
+  await openCreate(page);
   await gotoCharacterStep(page);
   await expect(page.getByTestId("agent-name")).toHaveValue("사진이");
   await expect(page.getByTestId("avatar-preview")).toHaveAttribute("data-selection", "saved");
@@ -280,7 +288,7 @@ test("a photo is saved, cropped and restored, and bad files are refused", async 
 });
 
 test("switching input keeps each editor's work, and an erased drawing cannot be saved", async ({ page }) => {
-  await page.goto("/create");
+  await openCreate(page);
   await gotoCharacterStep(page);
   await page.getByTestId("agent-name").fill("지우개");
   const confirm = page.getByTestId("onboarding-confirm");
@@ -296,17 +304,17 @@ test("switching input keeps each editor's work, and an erased drawing cannot be 
   await page.getByTestId("avatar-mode-drawing").click();
   await expect(preview).toHaveAttribute("data-selection", "draft");
 
-  await page.getByRole("button", { name: "모두 지우기" }).click();
+  await page.getByRole("button", { name: "Clear all" }).click();
   await expect(preview).toHaveAttribute("data-selection", "none");
   await expect(confirm).toBeDisabled();
 
-  await page.getByRole("button", { name: "되돌리기" }).click();
+  await page.getByRole("button", { name: "Undo" }).click();
   await expect(preview).toHaveAttribute("data-selection", "draft");
   await expect(confirm).toBeEnabled();
 });
 
 test("a concurrent change is reported instead of being overwritten silently", async ({ page }) => {
-  await page.goto("/create");
+  await openCreate(page);
   await gotoCharacterStep(page);
   await page.getByTestId("agent-name").fill("먼저");
   await drawStroke(page);
@@ -332,7 +340,7 @@ test("a concurrent change is reported instead of being overwritten silently", as
   await expect(page.locator('[data-testid="connection-notice"][data-code="CONFLICT"]')).toBeVisible();
   expect((await currentAgent(page)).name).toBe("다른 탭");
 
-  await page.getByRole("button", { name: "지금 화면의 내용으로 덮어쓰기" }).click();
+  await page.getByRole("button", { name: "Overwrite with what is on screen" }).click();
   await expectClassroom(page);
   expect((await currentAgent(page)).name).toBe("먼저");
 });

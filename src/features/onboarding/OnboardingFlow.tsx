@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AvatarEditor, AvatarPreview, useAvatarDraft } from "@/features/avatar";
-import { ModelPicker, SelectedModelSummary, type SelectionCheck } from "@/features/model-picker";
+import { ModelPicker, SelectedModelSummary, initialPickerView, type PickerView, type SelectionCheck } from "@/features/model-picker";
 import { api } from "@/shared/api";
 import { isSameModel, type ApiError, type ModelReference, type OnboardingFlowProps } from "@/shared/contracts";
 import { useAppStore } from "@/shared/state/appStore";
@@ -13,8 +13,8 @@ import styles from "./OnboardingFlow.module.css";
 const NAME_MAX = 40;
 
 const STEPS = [
-  { id: "model", label: "모델 고르기" },
-  { id: "character", label: "이름과 외형" },
+  { id: "model", label: "Choose a model" },
+  { id: "character", label: "Name and appearance" },
 ] as const;
 type StepId = (typeof STEPS)[number]["id"];
 
@@ -26,6 +26,7 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
   const savedModel = savedAgent?.selectedModel ?? null;
 
   const [step, setStep] = useState<StepId>("model");
+  const [pickerView, setPickerView] = useState<PickerView>(initialPickerView);
   const [model, setModel] = useState<ModelReference | null>(savedModel);
   const [savedModelCheck, setSavedModelCheck] = useState<SelectionCheck>(savedModel ? "checking" : "not_saved");
   const [name, setName] = useState(savedAgent?.name ?? "");
@@ -115,12 +116,14 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
   };
 
   const stepIndex = STEPS.findIndex((candidate) => candidate.id === step);
+  // The showroom is a full-viewport scene with its own header, so the page chrome steps aside.
+  const showroomActive = step === "model" && pickerView === "showroom";
 
   return (
     <div className={styles.flow}>
-      <Panel className={styles.head}>
-        <h1>에이전트 만들기</h1>
-        <ol className={styles.stepper} aria-label="만들기 단계">
+      <Panel className={styles.head} hidden={showroomActive}>
+        <h1>Create your agent</h1>
+        <ol className={styles.stepper} aria-label="Creation steps">
           {STEPS.map((candidate, index) => (
             <li
               key={candidate.id}
@@ -133,7 +136,7 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
           ))}
         </ol>
         <ButtonLink href="/classroom" variant="ghost">
-          {savedAgent ? `저장된 ${savedAgent.name}(으)로 교실 가기` : "에이전트 없이 교실 보기"}
+          {savedAgent ? `Go to the classroom as ${savedAgent.name}` : "View the classroom without an agent"}
         </ButtonLink>
       </Panel>
 
@@ -145,21 +148,32 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
             headingRefs.current.model = element;
           }}
         >
-          어떤 모델을 내 에이전트로 데려올까요?
+          Which model will you bring to your agent?
         </h2>
 
-        {model && <SelectedModelSummary model={model} check={shownCheck} onClear={() => setModel(null)} />}
-        {modelChanged && (
-          <p className={styles.warning} role="status">
-            모델을 바꾸면 이전 모델로 학습한 결과는 새 모델에 그대로 이어지지 않습니다.
-          </p>
+        <ModelPicker
+          selected={model}
+          onSelect={setModel}
+          view={pickerView}
+          onViewChange={setPickerView}
+          onContinue={() => goTo("character")}
+          listHeader={
+            <>
+              {model && <SelectedModelSummary model={model} check={shownCheck} onClear={() => setModel(null)} />}
+              {modelChanged && (
+                <p className={styles.warning} role="status">
+                  Changing models means results trained on the previous model do not carry over
+                </p>
+              )}
+            </>
+          }
+        />
+
+        {!showroomActive && (
+          <div className={styles.actions}>
+            <Button onClick={() => goTo("character")}>{model ? "Next: name and appearance" : "Continue without a model"}</Button>
+          </div>
         )}
-
-        <ModelPicker selected={model} onSelect={setModel} />
-
-        <div className={styles.actions}>
-          <Button onClick={() => goTo("character")}>{model ? "다음: 이름과 외형" : "모델 없이 다음으로"}</Button>
-        </div>
       </section>
 
       <section className={styles.step} hidden={step !== "character"} aria-labelledby="onboarding-character-title">
@@ -170,13 +184,13 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
             headingRefs.current.character = element;
           }}
         >
-          내 캐릭터를 만들어 볼까요?
+          Create your character
         </h2>
 
         <div className={styles.characterLayout}>
           <Panel className={styles.characterForm}>
             <label className={styles.nameField}>
-              이름
+              Name
               <input
                 type="text"
                 data-testid="agent-name"
@@ -184,7 +198,7 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
                 maxLength={NAME_MAX}
                 required
                 autoComplete="off"
-                placeholder="에이전트의 이름"
+                placeholder="Your agent's name"
                 aria-invalid={nameTouched && nameMissing}
                 onChange={(event) => setName(event.target.value)}
                 onBlur={() => setNameTouched(true)}
@@ -192,7 +206,7 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
             </label>
             {nameTouched && nameMissing && (
               <p className={styles.fieldProblem} role="alert">
-                이름을 입력해 주세요.
+                Enter a name
               </p>
             )}
             <AvatarEditor controller={avatar} />
@@ -202,7 +216,7 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
             <Panel className={styles.summaryPanel}>
               <AvatarPreview selection={selection} name={name} />
               <p className={styles.summaryModel} data-testid="summary-model">
-                {model ? model.modelId : "모델 미선택"}
+                {model ? model.modelId : "No model selected"}
               </p>
             </Panel>
           </aside>
@@ -214,10 +228,10 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
             {conflict && (
               <div className={styles.conflictActions}>
                 <Button variant="secondary" disabled={saving} onClick={() => void useAppStore.getState().loadAgent()}>
-                  저장된 최신 내용 불러오기
+                  Load the latest saved version
                 </Button>
                 <Button variant="ghost" disabled={saving} onClick={() => void overwriteConflict()}>
-                  지금 화면의 내용으로 덮어쓰기
+                  Overwrite with what is on screen
                 </Button>
               </div>
             )}
@@ -226,13 +240,13 @@ export function OnboardingFlow({ agent, onComplete }: OnboardingFlowProps) {
 
         <div className={styles.actions}>
           <Button variant="ghost" onClick={() => goTo("model")}>
-            모델 다시 고르기
+            Choose a different model
           </Button>
           <Button data-testid="onboarding-confirm" disabled={saving || !avatarReady} onClick={() => void save()}>
-            {saving ? "저장하는 중" : "이 모습으로 교실 입장"}
+            {saving ? "Saving" : "Enter the classroom"}
           </Button>
         </div>
-        {!avatarReady && !saving && <p className={styles.hint}>그림을 그리거나 사진을 넣으면 입장할 수 있어요.</p>}
+        {!avatarReady && !saving && <p className={styles.hint}>Draw or add a photo to enter</p>}
       </section>
     </div>
   );

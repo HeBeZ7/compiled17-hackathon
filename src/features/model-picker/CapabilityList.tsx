@@ -21,7 +21,7 @@ export function CapabilityList({ capabilities }: { capabilities: ModelCapabiliti
         })}
       </dl>
       <details className={styles.details}>
-        <summary>지원 근거 보기</summary>
+        <summary>Show support evidence</summary>
         <ul className={styles.evidenceList}>
           {CAPABILITY_ROWS.map(({ key, label }) => {
             const evidence = capabilities[key].evidence;
@@ -31,19 +31,19 @@ export function CapabilityList({ capabilities }: { capabilities: ModelCapabiliti
                 {evidence ? (
                   <>
                     {EVIDENCE_LABEL[evidence.level]}
-                    {evidence.checkedAt && ` · ${formatDateTime(evidence.checkedAt)} 확인`}
+                    {evidence.checkedAt && ` · checked ${formatDateTime(evidence.checkedAt)}`}
                     {evidence.note && ` · ${evidence.note}`}
                     {evidence.sourceUrl && (
                       <>
                         {" · "}
                         <a href={evidence.sourceUrl} target="_blank" rel="noreferrer">
-                          출처
+                          Source
                         </a>
                       </>
                     )}
                   </>
                 ) : (
-                  "근거 없음"
+                  "No evidence"
                 )}
               </li>
             );

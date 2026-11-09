@@ -15,7 +15,7 @@ function previewSource(selection: AvatarSelection): Blob | string | null {
 function statusText(selection: AvatarSelection): string {
   switch (selection.status) {
     case "none":
-      return "아직 외형이 없어요";
+      return "No appearance yet";
     case "failed":
       return selection.message;
     default:
@@ -60,9 +60,9 @@ export function AvatarPreview({ selection, name }: { selection: AvatarSelection;
   return (
     <figure className={styles.preview} data-testid="avatar-preview" data-selection={selection.status}>
       <figcaption className={styles.previewTitle}>
-        교실에서 보일 모습
-        {selection.status === "saved" && <StatusBadge tone="ok">저장된 외형</StatusBadge>}
-        {selection.status === "draft" && <StatusBadge tone="warn">아직 저장 전</StatusBadge>}
+        How you will look in the classroom
+        {selection.status === "saved" && <StatusBadge tone="ok">Saved appearance</StatusBadge>}
+        {selection.status === "draft" && <StatusBadge tone="warn">Not saved yet</StatusBadge>}
       </figcaption>
       <div className={styles.stage}>
         <span className={styles.groundShadow} aria-hidden="true" />
@@ -72,13 +72,13 @@ export function AvatarPreview({ selection, name }: { selection: AvatarSelection;
           width={AVATAR_RENDER_SIZE}
           height={AVATAR_RENDER_SIZE}
           role="img"
-          aria-label={`${name.trim() || "이름 없는 캐릭터"}의 외형 미리보기`}
+          aria-label={`Appearance preview for ${name.trim() || "an unnamed character"}`}
           hidden={source === null && !pending}
         />
         {source === null && !pending && <p className={styles.previewEmpty}>{statusText(selection)}</p>}
       </div>
-      <p className={styles.nameTag}>{name.trim() || "이름을 지어 주세요"}</p>
-      {failed && <p className={styles.problem}>저장된 외형 이미지를 불러오지 못했습니다.</p>}
+      <p className={styles.nameTag}>{name.trim() || "Give your character a name"}</p>
+      {failed && <p className={styles.problem}>Could not load the saved appearance image</p>}
     </figure>
   );
 }

@@ -53,7 +53,7 @@ export async function saveAgentProfile(
     }
     avatarAssetId = upload.asset.assetId;
   } else {
-    return { result: fail("INVALID_REQUEST", "캐릭터 외형을 먼저 완성해 주세요."), storedUpload };
+    return { result: fail("INVALID_REQUEST", "Finish your character appearance first"), storedUpload };
   }
 
   const result = await client.saveAgent(
