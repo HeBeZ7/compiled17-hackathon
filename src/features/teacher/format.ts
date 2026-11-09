@@ -1,19 +1,19 @@
 import type { EvidenceLevel } from "@/shared/contracts";
 
 export const EVIDENCE_LABEL: Record<EvidenceLevel, string> = {
-  USER_CONFIRMED: "사용자 확정",
-  DESIGN_DRAFT: "설계 초안",
-  ASSISTANT_PROPOSED: "제안 · 근거 미확인",
-  DOC_REVIEWED: "문서 확인",
-  RUNTIME_VERIFIED: "실행 확인",
-  UNKNOWN: "미확인",
-  DEFERRED: "보류",
+  USER_CONFIRMED: "User confirmed",
+  DESIGN_DRAFT: "Design draft",
+  ASSISTANT_PROPOSED: "Proposed · evidence unverified",
+  DOC_REVIEWED: "Docs reviewed",
+  RUNTIME_VERIFIED: "Runtime verified",
+  UNKNOWN: "Unknown",
+  DEFERRED: "Deferred",
 };
 
 export function formatDateTime(iso: string | null): string {
-  if (!iso) return "미확인";
+  if (!iso) return "Unknown";
   const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? "미확인" : date.toLocaleString("ko-KR");
+  return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString("en-US");
 }
 
 /** The contract's URL check accepts any scheme, so links are limited to http(s) before rendering. */

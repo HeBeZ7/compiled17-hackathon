@@ -17,12 +17,12 @@ function formatOf(row: Record<string, unknown>): DatasetFormat | null {
 }
 
 function conversationIssue(messages: unknown[]): string | null {
-  if (messages.length === 0) return "messages가 비어 있습니다.";
+  if (messages.length === 0) return "messages is empty";
   for (const message of messages) {
-    if (typeof message !== "object" || message === null) return "메시지 형식이 올바르지 않습니다.";
-    if (!CHAT_ROLES.has(String((message as { role?: unknown }).role))) return "지원하지 않는 role이 있습니다.";
+    if (typeof message !== "object" || message === null) return "Message format is invalid";
+    if (!CHAT_ROLES.has(String((message as { role?: unknown }).role))) return "Contains an unsupported role";
   }
-  if ((messages.at(-1) as { role?: unknown }).role !== "assistant") return "마지막 메시지는 assistant여야 합니다.";
+  if ((messages.at(-1) as { role?: unknown }).role !== "assistant") return "the last message must be from assistant";
   return null;
 }
 
@@ -35,7 +35,7 @@ export function inspectDataset(bytes: Uint8Array): DatasetInspection {
   try {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
-    return { format: null, exampleCount: 0, issues: ["UTF-8 텍스트가 아닙니다."] };
+    return { format: null, exampleCount: 0, issues: ["Not UTF-8 text"] };
   }
 
   const issues: string[] = [];
@@ -53,35 +53,35 @@ export function inspectDataset(bytes: Uint8Array): DatasetInspection {
     try {
       row = JSON.parse(line);
     } catch {
-      addIssue(`${lineNumber}행: JSON이 아닙니다.`);
+      addIssue(`Line ${lineNumber}: not JSON`);
       return;
     }
     if (typeof row !== "object" || row === null || Array.isArray(row)) {
-      addIssue(`${lineNumber}행: JSON 객체여야 합니다.`);
+      addIssue(`Line ${lineNumber}: must be a JSON object`);
       return;
     }
 
     const record = row as Record<string, unknown>;
     const rowFormat = formatOf(record);
     if (!rowFormat) {
-      addIssue(`${lineNumber}행: messages, prompt/completion, text 중 하나의 형식이어야 합니다.`);
+      addIssue(`Line ${lineNumber}: must use one of the messages, prompt/completion or text formats`);
       return;
     }
     format ??= rowFormat;
     if (rowFormat !== format) {
-      addIssue(`${lineNumber}행: 한 파일에 여러 형식을 섞을 수 없습니다.`);
+      addIssue(`Line ${lineNumber}: a file cannot mix formats`);
       return;
     }
     if (rowFormat === "conversational") {
       const issue = conversationIssue(record.messages as unknown[]);
       if (issue) {
-        addIssue(`${lineNumber}행: ${issue}`);
+        addIssue(`Line ${lineNumber}: ${issue}`);
         return;
       }
     }
     exampleCount += 1;
   });
 
-  if (exampleCount === 0 && issues.length === 0) issues.push("학습 예시가 없습니다.");
+  if (exampleCount === 0 && issues.length === 0) issues.push("No training examples");
   return { format, exampleCount, issues };
 }

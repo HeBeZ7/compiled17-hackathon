@@ -4,9 +4,9 @@ import { EVIDENCE_LABEL } from "./format";
 import styles from "./TeacherPanel.module.css";
 
 const TRAINING_BADGE: Record<SupportLevel, { tone: StatusTone; label: string }> = {
-  yes: { tone: "ok", label: "학습 지원 근거 있음" },
-  no: { tone: "danger", label: "학습 미지원" },
-  unknown: { tone: "unknown", label: "학습 지원 미확인" },
+  yes: { tone: "ok", label: "Training support on record" },
+  no: { tone: "danger", label: "Training not supported" },
+  unknown: { tone: "unknown", label: "Training support unknown" },
 };
 
 /** The user's student model, as stored on the profile. Unverified fields say so instead of being hidden. */
@@ -14,8 +14,8 @@ export function ModelSummary({ model }: { model: ModelReference | null }) {
   if (!model) {
     return (
       <div className={styles.model}>
-        <span className={styles.caption}>학생 모델</span>
-        <strong>아직 선택하지 않았습니다</strong>
+        <span className={styles.caption}>Student model</span>
+        <strong>Not selected yet</strong>
       </div>
     );
   }
@@ -23,10 +23,10 @@ export function ModelSummary({ model }: { model: ModelReference | null }) {
   const badge = TRAINING_BADGE[training.support];
   return (
     <div className={styles.model}>
-      <span className={styles.caption}>학생 모델</span>
+      <span className={styles.caption}>Student model</span>
       <strong className={styles.modelId}>{model.modelId}</strong>
       <span className={styles.meta}>
-        공급처 {model.publisher ?? model.source} · 버전 {model.revision ?? "미확인"} · 라이선스 {model.licenseRef ?? "미확인"}
+        Publisher {model.publisher ?? model.source} · Revision {model.revision ?? "Unknown"} · License {model.licenseRef ?? "Unknown"}
       </span>
       <span className={styles.badges}>
         <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>

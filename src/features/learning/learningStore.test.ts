@@ -111,7 +111,7 @@ beforeEach(async () => {
   agentCounter++;
   agent = {
     agentId: `11111111-1111-4111-8111-${String(agentCounter).padStart(12, "0")}`,
-    name: "초코",
+    name: "Choco",
     selectedModel: model,
     avatar: null,
     version: 1,
@@ -153,7 +153,7 @@ describe("submit", () => {
   });
 
   it("clears the request on a definite refusal", async () => {
-    create.mockResolvedValue(fail("BLOCKED", "조건 부족"));
+    create.mockResolvedValue(fail("BLOCKED", "Conditions not met"));
     readyToSubmit();
     await store().submit();
     expect(store().pending).toBeNull();
@@ -163,7 +163,7 @@ describe("submit", () => {
   });
 
   it("does not resend on an unknown outcome and keeps the key for checking", async () => {
-    create.mockResolvedValue(fail("NETWORK_ERROR", "끊김", { retryable: true }));
+    create.mockResolvedValue(fail("NETWORK_ERROR", "Dropped", { retryable: true }));
     readyToSubmit();
     await store().submit();
 
@@ -179,7 +179,7 @@ describe("submit", () => {
     create.mockImplementation(async (input: { spec: TrainingSpec; requestKey: string }) => {
       key = input.requestKey;
       spec = input.spec;
-      return fail("STATUS_UNKNOWN", "불명");
+      return fail("STATUS_UNKNOWN", "Unknown");
     });
     list.mockImplementation(async () => ok({ runs: key && spec ? [runFor(spec, key)] : [] }));
     readyToSubmit();
@@ -191,7 +191,7 @@ describe("submit", () => {
   });
 
   it("resends with the same key only on request", async () => {
-    create.mockResolvedValueOnce(fail("PROVIDER_TIMEOUT", "시간 초과"));
+    create.mockResolvedValueOnce(fail("PROVIDER_TIMEOUT", "Timed out"));
     readyToSubmit();
     await store().submit();
     const firstKey = create.mock.calls[0][0].requestKey;
@@ -205,7 +205,7 @@ describe("submit", () => {
   });
 
   it("does not allow a second request while one is unresolved", async () => {
-    create.mockResolvedValue(fail("NETWORK_ERROR", "끊김", { retryable: true }));
+    create.mockResolvedValue(fail("NETWORK_ERROR", "Dropped", { retryable: true }));
     readyToSubmit();
     await store().submit();
     readyToSubmit();
@@ -303,7 +303,7 @@ describe("stale work", () => {
   });
 
   it("keeps a failed quote as an error, not as a free price", async () => {
-    quoteCall.mockResolvedValue(fail("NOT_CONNECTED", "미연결"));
+    quoteCall.mockResolvedValue(fail("NOT_CONNECTED", "Not connected"));
     await store().requestQuote();
     expect(store().quote).toMatchObject({ state: "error", error: { code: "NOT_CONNECTED" } });
   });

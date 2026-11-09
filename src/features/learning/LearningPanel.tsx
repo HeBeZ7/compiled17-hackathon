@@ -12,40 +12,40 @@ import { selectAgentRuns, useLearningStore } from "./learningStore";
 import { PreparationSteps } from "./PreparationSteps";
 import { RunStatusView } from "./RunStatusView";
 
-const AGENT_REQUIRED = fail("BLOCKED", "에이전트 필요: 학습을 준비하려면 먼저 에이전트를 만들어 주세요.").error;
-const MODEL_REQUIRED = fail("BLOCKED", "학생 모델 필요: 학습할 모델을 먼저 선택해 주세요.").error;
+const AGENT_REQUIRED = fail("BLOCKED", "Agent needed: create an agent before preparing training").error;
+const MODEL_REQUIRED = fail("BLOCKED", "Student model needed: choose a model to train first").error;
 
 function PendingRequestNotice() {
   const { pending, pendingCheck, submitting, submitError, recheckPending, resendPending, discardPending } = useLearningStore();
   if (!pending) return null;
   return (
-    <section className={styles.pending} aria-label="결과를 확인하지 못한 요청" data-testid="pending-request">
-      <StatusBadge tone="unknown">요청 결과 불명</StatusBadge>
+    <section className={styles.pending} aria-label="Request with unknown outcome" data-testid="pending-request">
+      <StatusBadge tone="unknown">Outcome unknown</StatusBadge>
       <p>
-        {formatDateTime(pending.savedAt)}에 보낸 학습 요청의 결과를 아직 확인하지 못했습니다. 실패로 단정하지 않으며, 중복
-        실행을 막기 위해 자동으로 다시 보내지 않습니다.
+        The training request sent at {formatDateTime(pending.savedAt)} has no confirmed outcome yet · it is not treated as failed
+        and is never resent automatically, to avoid a duplicate run
       </p>
       {submitError && <ConnectionNotice error={submitError} />}
-      {pendingCheck.state === "loading" && <p role="status">서버 기록을 확인하는 중입니다.</p>}
+      {pendingCheck.state === "loading" && <p role="status">Checking server records</p>}
       {pendingCheck.state === "error" && <ConnectionNotice error={pendingCheck.error} />}
-      {pendingCheck.state === "ready" && <p className={styles.help}>서버에는 이 요청의 기록이 없습니다.</p>}
+      {pendingCheck.state === "ready" && <p className={styles.help}>The server has no record of this request</p>}
       <div className={styles.buttons}>
         <Button variant="secondary" onClick={() => void recheckPending()} disabled={submitting || pendingCheck.state === "loading"}>
-          기존 요청 다시 확인
+          Check existing request again
         </Button>
         {pendingCheck.state === "ready" && (
           <>
             <Button variant="secondary" onClick={() => void resendPending()} disabled={submitting}>
-              같은 요청 번호로 다시 보내기
+              Resend with the same request key
             </Button>
             <Button variant="ghost" onClick={discardPending} disabled={submitting}>
-              이 요청 기록 지우기
+              Delete this request record
             </Button>
           </>
         )}
       </div>
       {pendingCheck.state === "ready" && (
-        <p className={styles.help}>기록을 지우고 새로 요청하면, 이전 요청이 공급자에 도달했던 경우 비용이 두 번 발생할 수 있습니다.</p>
+        <p className={styles.help}>If you delete this record and request again, you may be charged twice if the earlier request reached the provider</p>
       )}
     </section>
   );
@@ -54,8 +54,8 @@ function PendingRequestNotice() {
 function RunHistory({ runs, onSelect }: { runs: TrainingRun[]; onSelect: (runId: string) => void }) {
   if (runs.length === 0) return null;
   return (
-    <section className={styles.step} aria-label="내 학습 기록">
-      <h3>내 학습 기록</h3>
+    <section className={styles.step} aria-label="My training runs">
+      <h3>My training runs</h3>
       <ul className={styles.history}>
         {runs.map((run) => {
           const copy = TRAINING_STATUS_COPY[run.status];
@@ -84,14 +84,14 @@ export function LearningPanel({ agent, onClose }: LearningPanelProps) {
   useEffect(() => open(agent), [agent, open]);
 
   return (
-    <div ref={dialogRef} className={styles.shell} role="dialog" aria-modal="true" aria-label="학습 준비">
+    <div ref={dialogRef} className={styles.shell} role="dialog" aria-modal="true" aria-label="Learning station">
       <Panel className={styles.panel}>
         <div className={styles.head}>
           <h2 tabIndex={-1} data-dialog-title>
-            학습 준비
+            Learning station
           </h2>
           <Button variant="ghost" onClick={onClose}>
-            닫기
+            Close
           </Button>
         </div>
 
@@ -100,7 +100,7 @@ export function LearningPanel({ agent, onClose }: LearningPanelProps) {
             <>
               <ConnectionNotice error={AGENT_REQUIRED} />
               <ButtonLink href="/create" variant="secondary">
-                에이전트 만들기
+                Create an agent
               </ButtonLink>
             </>
           ) : selected ? (

@@ -92,7 +92,7 @@ function reason(code: ApiError["code"], message: string, requiredConfig: string[
 
 function progressText(job: ProviderJob): string | null {
   return job.trainedSteps !== null && job.totalSteps !== null
-    ? `공급자 보고 진행: ${job.trainedSteps}/${job.totalSteps} 스텝`
+    ? `Provider-reported progress: ${job.trainedSteps}/${job.totalSteps} steps`
     : null;
 }
 
@@ -118,52 +118,52 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
   async function costReasons(spec: TrainingSpec, dataset: TrainingDataset | null, epochs: number): Promise<ApiError[]> {
     const ceiling = maxApprovedUsd();
     if (ceiling === null) {
-      return [reason("BLOCKED", "유료 학습에 승인된 서버 비용 한도가 없습니다.", [TRAINING_MAX_USD_ENV])];
+      return [reason("BLOCKED", "There is no server-approved cost limit for paid training", [TRAINING_MAX_USD_ENV])];
     }
-    if (spec.costLimit.currency !== "USD") return [reason("BLOCKED", "비용 한도는 USD로 지정해야 합니다.")];
-    if (spec.costLimit.amount > ceiling) return [reason("BLOCKED", "요청한 비용 한도가 승인된 서버 한도를 넘습니다.")];
+    if (spec.costLimit.currency !== "USD") return [reason("BLOCKED", "The cost limit must be in USD")];
+    if (spec.costLimit.amount > ceiling) return [reason("BLOCKED", "The requested cost limit exceeds the server-approved limit")];
 
     let price;
     try {
       price = await prices.trainingPrice(spec.baseModel.modelId);
     } catch {
-      return [reason("BLOCKED", "학습 단가 조회에 실패해 비용 한도를 확인할 수 없습니다.")];
+      return [reason("BLOCKED", "Training price lookup failed so the cost limit cannot be checked")];
     }
-    if (!price) return [reason("BLOCKED", "학습 단가를 확인하지 못해 비용 한도를 검증할 수 없습니다.")];
+    if (!price) return [reason("BLOCKED", "Training price is unconfirmed so the cost limit cannot be verified")];
     if (!dataset) return [];
 
     // UTF-8 bytes bound the token count from above: a token spans at least one byte.
     const estimatedMaxUsd = (dataset.sizeBytes * epochs * price.unitPrice) / 1_000_000;
     return estimatedMaxUsd > spec.costLimit.amount
-      ? [reason("BLOCKED", "예상 최대 학습 비용이 승인한 비용 한도를 넘습니다.")]
+      ? [reason("BLOCKED", "The estimated maximum training cost exceeds the approved cost limit")]
       : [];
   }
 
   async function checkSpec(spec: TrainingSpec, ctx: RequestContext): Promise<TrainingValidation> {
     const reasons: ApiError[] = [];
 
-    if (spec.provider !== provider.id) reasons.push(reason("UNSUPPORTED", `연결되지 않은 공급자입니다: ${spec.provider}`));
-    if (!provider.isConfigured()) reasons.push(reason("NOT_CONNECTED", "학습 공급자 연결 정보가 없습니다.", provider.requiredConfig));
+    if (spec.provider !== provider.id) reasons.push(reason("UNSUPPORTED", `Provider is not connected: ${spec.provider}`));
+    if (!provider.isConfigured()) reasons.push(reason("NOT_CONNECTED", "Training provider connection details are missing", provider.requiredConfig));
 
     const methods = nebiusMethodsFor(spec.baseModel.modelId);
-    if (methods.length === 0) reasons.push(reason("UNSUPPORTED", "이 모델은 공급자의 파인튜닝 지원 목록에 없습니다."));
-    else if (!methods.includes(spec.method)) reasons.push(reason("UNSUPPORTED", `이 모델은 ${spec.method} 방식을 지원하지 않습니다.`));
+    if (methods.length === 0) reasons.push(reason("UNSUPPORTED", "This model is not on the provider's fine-tuning support list"));
+    else if (!methods.includes(spec.method)) reasons.push(reason("UNSUPPORTED", `This model does not support the ${spec.method} method`));
 
     const dataset = loadDataset(spec.datasetId, ctx);
-    if (!dataset) reasons.push(reason("BLOCKED", "학습 자료를 찾을 수 없습니다."));
-    else if (dataset.validation !== "valid") reasons.push(reason("BLOCKED", "학습 자료 검증을 통과하지 못했습니다."));
+    if (!dataset) reasons.push(reason("BLOCKED", "Training data not found"));
+    else if (dataset.validation !== "valid") reasons.push(reason("BLOCKED", "Training data failed validation"));
 
     const config = Hyperparameters.safeParse(spec.config);
-    if (!config.success) reasons.push(reason("INVALID_REQUEST", "학습 설정이 공급자가 허용하는 범위를 벗어났습니다."));
+    if (!config.success) reasons.push(reason("INVALID_REQUEST", "Training config is outside the range the provider allows"));
 
     reasons.push(...(await costReasons(spec, dataset, config.success ? (config.data.n_epochs ?? DEFAULT_EPOCHS) : DEFAULT_EPOCHS)));
     return { status: reasons.length === 0 ? "ready" : "blocked", reasons, checkedAt: now() };
   }
 
   function replayRequest(record: TrainingRequestRecord, spec: TrainingSpec, ctx: RequestContext): ServiceResult<TrainingRun> {
-    if (record.fingerprint !== fingerprintOf(spec)) return fail("CONFLICT", "같은 요청 키로 다른 학습 내용을 보냈습니다.");
+    if (record.fingerprint !== fingerprintOf(spec)) return fail("CONFLICT", "The same request key was sent with different training details");
     const run = store.get<TrainingRun>(COLLECTIONS.trainingRuns, ctx.ownerId, record.runId);
-    return run ? ok(run.value) : fail("STATUS_UNKNOWN", "요청은 접수됐지만 학습 기록을 읽지 못했습니다.");
+    return run ? ok(run.value) : fail("STATUS_UNKNOWN", "The request was accepted but the training record could not be read");
   }
 
   function applyJob(run: TrainingRun, job: ProviderJob, observedAt: string): TrainingRun {
@@ -177,11 +177,11 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
         return { ...observed, status: job.status, statusReason: progressText(job) };
       }
       case "succeeded":
-        return { ...observed, status: "verifying_artifact", trainingCompleted: true, statusReason: "공급자가 학습 성공을 보고했습니다. 결과물을 확인합니다." };
+        return { ...observed, status: "verifying_artifact", trainingCompleted: true, statusReason: "The provider reported training success · verifying the artifact" };
       case "failed":
-        return { ...observed, status: "failed", statusReason: providerText(job.errorMessage) ?? "공급자가 실패를 보고했습니다." };
+        return { ...observed, status: "failed", statusReason: providerText(job.errorMessage) ?? "The provider reported failure" };
       case "cancelled":
-        return { ...observed, status: "canceled", statusReason: "공급자가 취소를 확인했습니다." };
+        return { ...observed, status: "canceled", statusReason: "The provider confirmed the cancellation" };
     }
   }
 
@@ -189,20 +189,20 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
     const fallbackReason = (statusReason: string): TrainingRun => ({ ...run, status: "verifying_artifact", statusReason });
 
     const checkpoints = await provider.listCheckpoints(job.id, ctx.signal);
-    if (!checkpoints.ok) return fallbackReason("결과물 목록을 아직 확인하지 못했습니다.");
+    if (!checkpoints.ok) return fallbackReason("The artifact list could not be confirmed yet");
 
     const latest = checkpoints.data.reduce<(typeof checkpoints.data)[number] | null>(
       (best, item) => (best === null || item.stepNumber > best.stepNumber ? item : best),
       null,
     );
     const fileIds = latest?.resultFiles.length ? latest.resultFiles : job.resultFiles;
-    if (fileIds.length === 0) return fallbackReason("공급자가 결과 파일을 아직 보고하지 않았습니다.");
+    if (fileIds.length === 0) return fallbackReason("The provider has not reported result files yet");
 
     const filenames: string[] = [];
     for (const fileId of fileIds.slice(0, MAX_VERIFIED_FILES)) {
       const file = await provider.getFile(fileId, ctx.signal);
-      if (!file.ok) return fallbackReason("결과 파일을 아직 확인하지 못했습니다.");
-      if (file.data.bytes <= 0) return fallbackReason("비어 있는 결과 파일이 있습니다.");
+      if (!file.ok) return fallbackReason("A result file could not be confirmed yet");
+      if (file.data.bytes <= 0) return fallbackReason("A result file is empty");
       filenames.push(file.data.filename);
     }
 
@@ -224,7 +224,7 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
       fileIds,
     };
     store.put(COLLECTIONS.artifacts, ctx.ownerId, artifactId, record);
-    return { ...run, status: "completed", artifactId, statusReason: "결과 파일 존재를 확인했습니다. 모델 사용 가능 여부는 별도로 확인해야 합니다.", updatedAt: verifiedAt };
+    return { ...run, status: "completed", artifactId, statusReason: "Result files confirmed · model availability must be checked separately", updatedAt: verifiedAt };
   }
 
   async function finishApplyingJob(applied: TrainingRun, job: ProviderJob, ctx: RequestContext): Promise<TrainingRun> {
@@ -252,7 +252,7 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
 
     if (run.status === "submitting") {
       if (Date.now() - new Date(run.updatedAt).getTime() < STALE_SUBMIT_MS) return run;
-      run = { ...run, status: "status_unknown", statusReason: "학습 요청 처리가 중단되어 결과를 알 수 없습니다.", updatedAt: now() };
+      run = { ...run, status: "status_unknown", statusReason: "Training request processing was interrupted so the outcome is unknown", updatedAt: now() };
     }
 
     if (run.providerJobId === null) {
@@ -260,7 +260,7 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
       const found = await reconcile(run, ctx);
       if (!found.ok) return save(doc, { ...run, pollError: found.error, updatedAt: now() });
       if (found.data === null) {
-        return save(doc, { ...run, pollError: null, statusReason: "공급자에서 일치하는 작업을 찾지 못했습니다. 자동으로 다시 요청하지 않습니다.", updatedAt: now() });
+        return save(doc, { ...run, pollError: null, statusReason: "No matching job was found at the provider · not requesting again automatically", updatedAt: now() });
       }
       return save(doc, await finishApplyingJob(applyJob(run, found.data, now()), found.data, ctx));
     }
@@ -274,8 +274,8 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
   return {
     async uploadDataset(form: FormData, ctx: RequestContext): Promise<ServiceResult<TrainingDataset>> {
       const file = form.get("file");
-      if (!(file instanceof File)) return fail("INVALID_REQUEST", "학습 자료 파일이 필요합니다.");
-      if (file.size > MAX_DATASET_BYTES) return fail("PAYLOAD_TOO_LARGE", "학습 자료는 64MB 이하여야 합니다.");
+      if (!(file instanceof File)) return fail("INVALID_REQUEST", "A training data file is required");
+      if (file.size > MAX_DATASET_BYTES) return fail("PAYLOAD_TOO_LARGE", "Training data must be 64MB or smaller");
 
       const bytes = new Uint8Array(await file.arrayBuffer());
       const inspection = inspectDataset(bytes);
@@ -340,13 +340,13 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
       const dataset = loadDataset(spec.datasetId, ctx);
       const blob = store.getBlob(ctx.ownerId, datasetBlobId(spec.datasetId));
       if (!dataset || !blob) {
-        return ok(save(doc, { ...doc.value, status: "failed", statusReason: "학습 자료를 읽지 못했습니다.", updatedAt: now() }));
+        return ok(save(doc, { ...doc.value, status: "failed", statusReason: "Training data could not be read", updatedAt: now() }));
       }
 
       const upload = await provider.uploadFile(dataset.fileName, blob.bytes);
       if (!upload.ok) {
         // No job exists yet, so this is a definite failure even after a timeout.
-        return ok(save(doc, { ...doc.value, status: "failed", statusReason: `학습 자료 업로드 실패: ${upload.error.message}`, updatedAt: now() }));
+        return ok(save(doc, { ...doc.value, status: "failed", statusReason: `Training data upload failed: ${upload.error.message}`, updatedAt: now() }));
       }
       doc = store.get<TrainingRun>(COLLECTIONS.trainingRuns, ctx.ownerId, runId) ?? doc;
 
@@ -364,7 +364,7 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
           save(doc, {
             ...doc.value,
             status: unknown ? "status_unknown" : "failed",
-            statusReason: unknown ? "학습 요청의 결과를 알 수 없습니다. 기존 작업을 조회합니다." : created.error.message,
+            statusReason: unknown ? "The training request outcome is unknown · checking for an existing job" : created.error.message,
             pollError: unknown ? created.error : null,
             updatedAt: now(),
           }),
@@ -379,23 +379,23 @@ export function createTrainingService({ store, provider, prices, maxApprovedUsd 
 
     async getTrainingRun(runId: string, ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
       const doc = store.get<TrainingRun>(COLLECTIONS.trainingRuns, ctx.ownerId, runId);
-      return doc ? ok(await refresh(doc, ctx)) : fail("NOT_FOUND", "학습 기록을 찾을 수 없습니다.");
+      return doc ? ok(await refresh(doc, ctx)) : fail("NOT_FOUND", "Training record not found");
     },
 
     async cancelTrainingRun(runId: string, ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
       const doc = store.get<TrainingRun>(COLLECTIONS.trainingRuns, ctx.ownerId, runId);
-      if (!doc) return fail("NOT_FOUND", "학습 기록을 찾을 수 없습니다.");
+      if (!doc) return fail("NOT_FOUND", "Training record not found");
       if (isTerminal(doc.value)) return ok(doc.value);
 
       const current = doc.value.providerJobId === null ? await refresh(doc, ctx) : doc.value;
-      if (current.providerJobId === null) return fail("BLOCKED", "공급자 작업을 확인하지 못해 취소할 수 없습니다.");
+      if (current.providerJobId === null) return fail("BLOCKED", "Cannot cancel because the provider job could not be confirmed");
       if (isTerminal(current)) return ok(current);
 
       const latest = store.get<TrainingRun>(COLLECTIONS.trainingRuns, ctx.ownerId, runId) ?? doc;
       const requested = store.put<TrainingRun>(COLLECTIONS.trainingRuns, ctx.ownerId, runId, {
         ...latest.value,
         status: "cancel_requested",
-        statusReason: "취소를 요청했습니다. 공급자 확인을 기다립니다.",
+        statusReason: "Cancel requested · waiting for provider confirmation",
         updatedAt: now(),
       });
 

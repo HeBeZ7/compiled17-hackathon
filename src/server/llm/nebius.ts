@@ -42,16 +42,16 @@ function indeterminate(error: ApiError): NebiusResult<never> {
 function failureFor(status: number): NebiusResult<never> {
   if (status === 401 || status === 403) {
     return rejected(
-      fail("NOT_CONNECTED", "Nebius가 API 키 또는 권한을 거부했습니다.", { requiredConfig: [NEBIUS_KEY_NAME] }).error,
+      fail("NOT_CONNECTED", "Nebius rejected the API key or permission", { requiredConfig: [NEBIUS_KEY_NAME] }).error,
     );
   }
-  if (status === 402) return rejected(fail("BLOCKED", "Nebius 계정의 잔액 또는 결제 상태를 확인해야 합니다.").error);
-  if (status === 404) return rejected(fail("NOT_FOUND", "Nebius에서 요청한 대상을 찾지 못했습니다.").error);
-  if (status === 429) return rejected(fail("RATE_LIMITED", "Nebius 요청 한도를 초과했습니다.", { retryable: true }).error);
+  if (status === 402) return rejected(fail("BLOCKED", "Check your Nebius account balance or billing status").error);
+  if (status === 404) return rejected(fail("NOT_FOUND", "Nebius could not find the requested target").error);
+  if (status === 429) return rejected(fail("RATE_LIMITED", "Nebius request limit exceeded", { retryable: true }).error);
   if (status >= 500) {
-    return indeterminate(fail("PROVIDER_ERROR", `Nebius 서버 오류가 발생했습니다. (HTTP ${status})`, { retryable: true }).error);
+    return indeterminate(fail("PROVIDER_ERROR", `Nebius server error (HTTP ${status})`, { retryable: true }).error);
   }
-  return rejected(fail("PROVIDER_ERROR", `Nebius가 요청을 거부했습니다. (HTTP ${status})`).error);
+  return rejected(fail("PROVIDER_ERROR", `Nebius rejected the request (HTTP ${status})`).error);
 }
 
 /** Provider response bodies are never copied into errors: they can echo user data. */
@@ -62,7 +62,7 @@ export async function nebiusRequest<S extends z.ZodType>(
 ): Promise<NebiusResult<z.output<S>>> {
   const key = process.env[NEBIUS_KEY_NAME];
   if (!key) {
-    return rejected(fail("NOT_CONNECTED", "Nebius 연결 정보가 없습니다.", { requiredConfig: [NEBIUS_KEY_NAME] }).error);
+    return rejected(fail("NOT_CONNECTED", "Nebius connection details are missing", { requiredConfig: [NEBIUS_KEY_NAME] }).error);
   }
 
   const timeout = AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -82,8 +82,8 @@ export async function nebiusRequest<S extends z.ZodType>(
     });
   } catch {
     return timeout.aborted
-      ? indeterminate(fail("PROVIDER_TIMEOUT", "Nebius 응답 시간이 초과되었습니다.", { retryable: true }).error)
-      : indeterminate(fail("PROVIDER_ERROR", "Nebius에 연결하지 못했습니다.", { retryable: true }).error);
+      ? indeterminate(fail("PROVIDER_TIMEOUT", "Nebius response timed out", { retryable: true }).error)
+      : indeterminate(fail("PROVIDER_ERROR", "Could not connect to Nebius", { retryable: true }).error);
   }
 
   if (!response.ok) return failureFor(response.status);
@@ -94,7 +94,7 @@ export async function nebiusRequest<S extends z.ZodType>(
   } catch {
     // Unreadable body: handled below as an unexpected response.
   }
-  return indeterminate(fail("PROVIDER_ERROR", "Nebius 응답을 해석하지 못했습니다.", { retryable: true }).error);
+  return indeterminate(fail("PROVIDER_ERROR", "Could not parse the Nebius response", { retryable: true }).error);
 }
 
 const ChatCompletion = z.object({
@@ -121,7 +121,7 @@ export async function nebiusChat(input: NebiusChatInput): Promise<NebiusResult<s
   if (!result.ok) return result;
 
   const text = result.data.choices[0].message.content;
-  if (!text) return indeterminate(fail("PROVIDER_ERROR", "Nebius가 빈 응답을 반환했습니다.", { retryable: true }).error);
+  if (!text) return indeterminate(fail("PROVIDER_ERROR", "Nebius returned an empty reply", { retryable: true }).error);
   return { ok: true, data: text };
 }
 

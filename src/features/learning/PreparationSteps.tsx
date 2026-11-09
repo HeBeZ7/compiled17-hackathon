@@ -19,22 +19,27 @@ import styles from "./LearningPanel.module.css";
 import { remoteData, selectAgentRuns, useLearningStore } from "./learningStore";
 
 const METHOD_LABEL: Record<TrainingMethod, string> = {
-  lora: "LoRA 어댑터",
-  qlora: "QLoRA 어댑터",
-  full: "전체 파라미터",
+  lora: "LoRA adapter",
+  qlora: "QLoRA adapter",
+  full: "Full parameters",
 };
 
 const DATASET_BADGE: Record<TrainingDataset["validation"], { tone: StatusTone; label: string }> = {
-  pending: { tone: "unknown", label: "검증 대기" },
-  valid: { tone: "ok", label: "검증 통과" },
-  invalid: { tone: "danger", label: "검증 실패" },
-  unknown: { tone: "unknown", label: "검증 미확인" },
+  pending: { tone: "unknown", label: "Validation pending" },
+  valid: { tone: "ok", label: "Validation passed" },
+  invalid: { tone: "danger", label: "Validation failed" },
+  unknown: { tone: "unknown", label: "Validation unknown" },
 };
 
-function Step({ title, testId, children }: { title: string; testId?: string; children: ReactNode }) {
+function Step({ step, title, testId, children }: { step: number; title: string; testId?: string; children: ReactNode }) {
   return (
-    <section className={styles.step} aria-label={title} data-testid={testId}>
-      <h3>{title}</h3>
+    <section className={styles.step} aria-label={`Step ${step} · ${title}`} data-testid={testId}>
+      <h3 className={styles.stepTitle}>
+        <span className={styles.stepNumber} aria-hidden="true">
+          {step}
+        </span>
+        {title}
+      </h3>
       {children}
     </section>
   );
@@ -60,25 +65,25 @@ function DatasetStep() {
   };
 
   return (
-    <Step title="1. 학습 자료">
+    <Step step={1} title="Training data">
       <p className={styles.help}>
-        GPU 학습에는 준비된 자료 파일이 필요합니다. 선생님에게 설명한 목표만으로는 학습 자료가 되지 않습니다.
+        GPU training needs a prepared data file · the goal you described to the teacher is not training data on its own
       </p>
       <label className={styles.field}>
-        <span>자료 파일</span>
+        <span>Data file</span>
         <input type="file" onChange={onFile} disabled={dataset.state === "loading"} />
       </label>
-      {dataset.state === "loading" && <p role="status">자료를 저장하는 중입니다.</p>}
+      {dataset.state === "loading" && <p role="status">Saving data</p>}
       {dataset.state === "error" && <ConnectionNotice error={dataset.error} />}
       {data && (
         <dl className={styles.facts}>
-          <Fact label="저장된 파일">{data.fileName}</Fact>
-          <Fact label="크기">{data.sizeBytes.toLocaleString("ko-KR")} 바이트</Fact>
-          <Fact label="검증">
+          <Fact label="Saved file">{data.fileName}</Fact>
+          <Fact label="Size">{data.sizeBytes.toLocaleString("en-US")} bytes</Fact>
+          <Fact label="Validation">
             <StatusBadge tone={DATASET_BADGE[data.validation].tone}>{DATASET_BADGE[data.validation].label}</StatusBadge>
           </Fact>
-          <Fact label="형식">{data.format ?? "미확인"}</Fact>
-          <Fact label="예시 수">{data.exampleCount ?? "미확인"}</Fact>
+          <Fact label="Format">{data.format ?? "Unknown"}</Fact>
+          <Fact label="Examples">{data.exampleCount ?? "Unknown"}</Fact>
         </dl>
       )}
       {data && data.issues.length > 0 && (
@@ -96,9 +101,9 @@ function MethodStep() {
   const { method, hours, setMethod, setHours } = useLearningStore();
   const hoursInvalid = hours.trim() !== "" && parsePositive(hours) === null;
   return (
-    <Step title="2. 학습 방식">
+    <Step step={2} title="Training method">
       <label className={styles.field}>
-        <span>방식</span>
+        <span>Method</span>
         <select
           value={method ?? ""}
           onChange={(event) => {
@@ -106,7 +111,7 @@ function MethodStep() {
             setMethod(parsed.success ? parsed.data : null);
           }}
         >
-          <option value="">골라 주세요</option>
+          <option value="">Choose one</option>
           {TrainingMethod.options.map((option) => (
             <option key={option} value={option}>
               {METHOD_LABEL[option]}
@@ -114,12 +119,12 @@ function MethodStep() {
           ))}
         </select>
       </label>
-      <p className={styles.help}>이 모델과 방식이 실제로 가능한지는 아래 서버 조건 확인에서 판정합니다.</p>
+      <p className={styles.help}>The server check below decides whether this model and method are actually possible</p>
       <label className={styles.field}>
-        <span>예상 학습 시간 (선택, 시간)</span>
+        <span>Estimated training time in hours (optional)</span>
         <input type="text" inputMode="decimal" value={hours} onChange={(event) => setHours(event.target.value)} />
       </label>
-      {hoursInvalid && <p className={styles.warn}>0보다 큰 숫자로 입력해 주세요.</p>}
+      {hoursInvalid && <p className={styles.warn}>Enter a number greater than 0</p>}
     </Step>
   );
 }
@@ -131,31 +136,31 @@ function QuoteDetails({ quote }: { quote: PriceQuote }) {
     <>
       {!known && (
         <p className={styles.warn} role="status">
-          가격을 확인하지 못했습니다. 무료라는 뜻이 아닙니다.
+          Price could not be confirmed · this does not mean free
         </p>
       )}
       <dl className={styles.facts}>
-        <Fact label="공급자">{quote.provider}</Fact>
-        <Fact label="지역">{quote.region ?? "미확인"}</Fact>
-        <Fact label="GPU">{quote.gpuType ?? "미확인"}</Fact>
-        <Fact label="단가">
+        <Fact label="Provider">{quote.provider}</Fact>
+        <Fact label="Region">{quote.region ?? "Unknown"}</Fact>
+        <Fact label="GPU">{quote.gpuType ?? "Unknown"}</Fact>
+        <Fact label="Unit price">
           {formatAmount(quote.unitPrice, quote.currency)}
-          {quote.unit ? ` / ${quote.unit}` : " (단위 미확인)"}
+          {quote.unit ? ` / ${quote.unit}` : " (unit unknown)"}
         </Fact>
-        <Fact label="총액 추정">
+        <Fact label="Estimated total">
           {formatAmount(quote.estimatedTotal, quote.currency)}
-          {quote.estimatedTotal !== null && " · 추정치이며 실제 청구액과 다를 수 있음"}
+          {quote.estimatedTotal !== null && " · estimate only and may differ from the actual bill"}
         </Fact>
-        <Fact label="값의 출처">
+        <Fact label="Value source">
           {FRESHNESS_LABEL[quote.freshness]}
-          {quote.cachedAt && ` (저장 ${formatDateTime(quote.cachedAt)})`}
+          {quote.cachedAt && ` (saved ${formatDateTime(quote.cachedAt)})`}
         </Fact>
-        <Fact label="조회 시각">{formatDateTime(quote.queriedAt)}</Fact>
-        <Fact label="제외 비용">{quote.excludedCosts.length ? quote.excludedCosts.join(", ") : "공급자 정보 없음"}</Fact>
+        <Fact label="Queried at">{formatDateTime(quote.queriedAt)}</Fact>
+        <Fact label="Excluded costs">{quote.excludedCosts.length ? quote.excludedCosts.join(", ") : "No provider information"}</Fact>
         {source && (
-          <Fact label="출처">
+          <Fact label="Source">
             <a href={source} target="_blank" rel="noreferrer noopener">
-              가격 출처 보기
+              View price source
             </a>
           </Fact>
         )}
@@ -168,9 +173,9 @@ function QuoteDetails({ quote }: { quote: PriceQuote }) {
 function PriceStep() {
   const { agent, quote, requestQuote } = useLearningStore();
   return (
-    <Step title="3. 가격 확인" testId="price-panel">
+    <Step step={3} title="Price check" testId="price-panel">
       <Button variant="secondary" onClick={() => void requestQuote()} disabled={!agent?.selectedModel || quote.state === "loading"}>
-        {quote.state === "loading" ? "조회 중" : quote.state === "ready" ? "가격 다시 조회" : "가격 조회"}
+        {quote.state === "loading" ? "Looking up" : quote.state === "ready" ? "Check price again" : "Check price"}
       </Button>
       {quote.state === "error" && <ConnectionNotice error={quote.error} />}
       {quote.state === "ready" && <QuoteDetails quote={quote.data} />}
@@ -194,32 +199,32 @@ function LimitAndValidateStep() {
   const amountInvalid = limitAmount.trim() !== "" && parsePositive(limitAmount) === null;
 
   return (
-    <Step title="4. 비용 한도와 조건 확인">
+    <Step step={4} title="Cost limit and conditions">
       <div className={styles.row}>
         <label className={styles.field}>
-          <span>통화 (예: USD)</span>
+          <span>Currency (such as USD)</span>
           <input type="text" maxLength={3} value={limitCurrency} onChange={(event) => setLimit({ currency: event.target.value })} />
         </label>
         <label className={styles.field}>
-          <span>실행 비용 한도</span>
+          <span>Run cost limit</span>
           <input type="text" inputMode="decimal" value={limitAmount} onChange={(event) => setLimit({ amount: event.target.value })} />
         </label>
       </div>
-      {currencyInvalid && <p className={styles.warn}>통화는 세 글자 코드로 입력해 주세요.</p>}
-      {amountInvalid && <p className={styles.warn}>한도는 0보다 큰 숫자로 입력해 주세요.</p>}
+      {currencyInvalid && <p className={styles.warn}>Use a three-letter currency code</p>}
+      {amountInvalid && <p className={styles.warn}>Enter a limit greater than 0</p>}
       {limitBelowEstimate(remoteData(quote), limitCurrency, limitAmount) && (
-        <p className={styles.warn}>입력한 한도가 총액 추정보다 낮습니다.</p>
+        <p className={styles.warn}>This limit is below the estimated total</p>
       )}
       <Button variant="secondary" onClick={() => void validate()} disabled={!spec || validation.state === "loading"}>
-        {validation.state === "loading" ? "확인 중" : "서버에서 조건 확인"}
+        {validation.state === "loading" ? "Checking" : "Check conditions on server"}
       </Button>
       {validation.state === "error" && <ConnectionNotice error={validation.error} />}
       {result && (
         <div className={styles.validation}>
           <StatusBadge tone={result.status === "ready" ? "ok" : "warn"}>
-            {result.status === "ready" ? "조건 통과" : "준비 필요"}
+            {result.status === "ready" ? "Conditions passed" : "Needs preparation"}
           </StatusBadge>
-          <span className={styles.help}>확인 시각 {formatDateTime(result.checkedAt)}</span>
+          <span className={styles.help}>Checked at {formatDateTime(result.checkedAt)}</span>
           {result.reasons.map((reason, index) => (
             <ConnectionNotice key={index} error={reason} />
           ))}
@@ -250,7 +255,7 @@ function SubmitStep() {
   const canApprove = validation?.status === "ready" && quote !== null && isPriceKnown(quote);
 
   return (
-    <Step title="5. 학습 요청">
+    <Step step={5} title="Training request">
       <label className={styles.check}>
         <input
           type="checkbox"
@@ -259,14 +264,14 @@ function SubmitStep() {
           onChange={(event) => state.setCostApproved(event.target.checked)}
         />
         <span>
-          실제 GPU 비용이 발생할 수 있고, 표시된 금액은 추정치임을 이해합니다. 위 비용 한도로 이번 학습 요청을 승인합니다.
+          I understand real GPU costs may apply and the amounts shown are estimates · I approve this training request within the cost limit above
         </span>
       </label>
       <Button data-testid="training-start" onClick={() => void state.submit()} disabled={blockers.length > 0}>
-        {state.submitting ? "요청 보내는 중" : "실제 학습 요청"}
+        {state.submitting ? "Sending request" : "Request real training"}
       </Button>
       {blockers.length > 0 && !state.submitting && (
-        <ul className={styles.blockers} aria-label="요청 전에 필요한 것">
+        <ul className={styles.blockers} aria-label="Needed before requesting">
           {blockers.map((blocker) => (
             <li key={blocker}>{blocker}</li>
           ))}

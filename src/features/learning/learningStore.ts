@@ -290,7 +290,7 @@ export const useLearningStore = create<LearningState>((set, get) => {
         set({
           submitError: fail(
             "BLOCKED",
-            "이 브라우저에 요청 기록을 저장하지 못해 학습을 요청하지 않았습니다. 기록 없이 보내면 중복 실행을 막을 수 없습니다.",
+            "This browser could not save the request record so training was not requested · without it a duplicate run cannot be prevented",
           ).error,
         });
         return;

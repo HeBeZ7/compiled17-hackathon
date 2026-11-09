@@ -119,13 +119,13 @@ describe("dataset inspection", () => {
 
   it("rejects a conversation that does not end with assistant, without echoing content", () => {
     const result = inspectDataset(encode('{"messages":[{"role":"user","content":"SECRET-TEXT"}]}'));
-    expect(result.issues).toEqual(["1행: 마지막 메시지는 assistant여야 합니다."]);
+    expect(result.issues).toEqual(["Line 1: the last message must be from assistant"]);
     expect(JSON.stringify(result)).not.toContain("SECRET-TEXT");
   });
 
   it("rejects mixed formats and empty files", () => {
     expect(inspectDataset(encode('{"text":"a"}\n{"prompt":"p","completion":"c"}')).issues).toHaveLength(1);
-    expect(inspectDataset(encode("\n")).issues).toEqual(["학습 예시가 없습니다."]);
+    expect(inspectDataset(encode("\n")).issues).toEqual(["No training examples"]);
   });
 });
 
@@ -154,7 +154,7 @@ describe("training conditions", () => {
     service = createTrainingService({ store, provider, prices: expensive, maxApprovedUsd: () => 10 });
     const dataset = await upload();
     const result = await service.validateTraining(specFor(dataset.datasetId), ctx);
-    expect(result.ok && result.data.reasons.map((item) => item.message)).toContain("예상 최대 학습 비용이 승인한 비용 한도를 넘습니다.");
+    expect(result.ok && result.data.reasons.map((item) => item.message)).toContain("The estimated maximum training cost exceeds the approved cost limit");
   });
 
   it("refuses models and methods outside the provider table, and unknown config keys", async () => {
@@ -170,7 +170,7 @@ describe("training conditions", () => {
   it("cannot see another owner's dataset", async () => {
     const dataset = await upload();
     const result = await service.validateTraining(specFor(dataset.datasetId), { ...ctx, ownerId: "owner-b" });
-    expect(result.ok && result.data.reasons.map((item) => item.message)).toContain("학습 자료를 찾을 수 없습니다.");
+    expect(result.ok && result.data.reasons.map((item) => item.message)).toContain("Training data not found");
   });
 });
 
@@ -352,7 +352,7 @@ describe("price quotes", () => {
     const pricing = createPricingService({ store, prices: { id: "nebius", trainingPrice: async () => { throw new Error("down"); } } });
     const result = await pricing.getPriceQuote(request, ctx);
     expect(result.ok && result.data).toMatchObject({ unitPrice: null, freshness: "fetch_failed" });
-    expect(result.ok && result.data.notes).toContain("실패");
+    expect(result.ok && result.data.notes).toContain("failed");
   });
 
   it("labels a known price with its unit and keeps it out of live freshness", async () => {

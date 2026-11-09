@@ -12,9 +12,9 @@ import type { Remote } from "./learningStore";
 const RUNTIME_POLL_MS = 5_000;
 
 const ARTIFACT_KIND: Record<ModelArtifact["kind"], string> = {
-  lora_adapter: "LoRA 어댑터",
-  full_weights: "전체 가중치",
-  unknown: "종류 미확인",
+  lora_adapter: "LoRA adapter",
+  full_weights: "Full weights",
+  unknown: "Kind unknown",
 };
 
 function Row({ title, copy, children }: { title: string; copy: StatusCopy; children?: ReactNode }) {
@@ -54,11 +54,11 @@ function InferenceCheck({ artifactId, onDone }: { artifactId: string; onDone: ()
   return (
     <form className={styles.inference} onSubmit={run}>
       <label className={styles.field}>
-        <span>결과 모델에게 시험 질문</span>
+        <span>Test question for the result model</span>
         <textarea rows={2} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
       </label>
       <Button type="submit" variant="secondary" disabled={!prompt.trim() || busy}>
-        {busy ? "응답 기다리는 중" : "실제 응답 확인"}
+        {busy ? "Waiting for a reply" : "Check real response"}
       </Button>
       {error && <ConnectionNotice error={error} />}
       {response && (
@@ -68,7 +68,7 @@ function InferenceCheck({ artifactId, onDone }: { artifactId: string; onDone: ()
             <span className={styles.help}>{formatDateTime(response.respondedAt)}</span>
           </span>
           <p className={styles.text}>{response.text}</p>
-          <p className={styles.help}>이 응답 하나로 성능 향상을 판단할 수 없습니다.</p>
+          <p className={styles.help}>One response cannot show whether performance improved</p>
         </div>
       )}
     </form>
@@ -133,27 +133,27 @@ export function ResultLedger({ run }: { run: TrainingRun }) {
     (runtimeData?.state === "not_loaded" || runtimeData?.state === "load_failed" || runtimeData?.state === "unknown");
 
   return (
-    <section className={styles.ledger} aria-label="결과 상태">
-      <h3>결과 상태</h3>
-      <Row title="학습" copy={describeTrainingOutcome(run)} />
+    <section className={styles.ledger} aria-label="Result status">
+      <h3>Result status</h3>
+      <Row title="Training" copy={describeTrainingOutcome(run)} />
 
-      <Row title="결과물" copy={describeArtifact(artifactData, artifactId)}>
+      <Row title="Artifact" copy={describeArtifact(artifactData, artifactId)}>
         {artifact.state === "error" && <ConnectionNotice error={artifact.error} />}
         {artifactData && (
           <p className={styles.help}>
-            {ARTIFACT_KIND[artifactData.kind]} · 기반 모델 {artifactData.baseModel.modelId} 전용
+            {ARTIFACT_KIND[artifactData.kind]} · only for base model {artifactData.baseModel.modelId}
           </p>
         )}
       </Row>
 
       {artifactId && (
-        <Row title="실제 사용" copy={describeRuntime(runtimeData)}>
+        <Row title="Real use" copy={describeRuntime(runtimeData)}>
           {runtime.state === "error" && <ConnectionNotice error={runtime.error} />}
           {runtimeData?.error && <ConnectionNotice error={runtimeData.error} />}
           {loadError && <ConnectionNotice error={loadError} />}
           {canLoad && (
             <Button variant="secondary" onClick={() => void load()}>
-              결과 모델 불러오기
+              Load result model
             </Button>
           )}
           {runtimeData?.state === "loaded" && (
@@ -163,16 +163,16 @@ export function ResultLedger({ run }: { run: TrainingRun }) {
       )}
 
       <Row
-        title="성능 평가"
+        title="Performance evaluation"
         copy={
           run.evaluationResult
-            ? { tone: "ok", label: "평가 있음", detail: run.evaluationResult.summary }
-            : { tone: "unknown", label: "평가 없음", detail: "학습 완료가 성능 향상을 뜻하지는 않습니다." }
+            ? { tone: "ok", label: "Evaluation available", detail: run.evaluationResult.summary }
+            : { tone: "unknown", label: "No evaluation", detail: "Completed training does not mean improved performance" }
         }
       >
         {run.evaluationResult && (
           <p className={styles.help}>
-            평가 자료 {run.evaluationResult.evalDatasetId} · {formatDateTime(run.evaluationResult.evaluatedAt)}
+            Evaluation data {run.evaluationResult.evalDatasetId} · {formatDateTime(run.evaluationResult.evaluatedAt)}
           </p>
         )}
       </Row>

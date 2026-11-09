@@ -38,7 +38,7 @@ function capabilities(training: ModelCapabilities["training"]["support"] = "unkn
     accountVerified: unknown,
     training: {
       support: training,
-      evidence: training === "unknown" ? null : { level: "DOC_REVIEWED", sourceUrl: SOURCE, checkedAt: NOW, note: "공식 문서" },
+      evidence: training === "unknown" ? null : { level: "DOC_REVIEWED", sourceUrl: SOURCE, checkedAt: NOW, note: "Official docs" },
     },
   };
 }
@@ -50,7 +50,7 @@ function model(modelId: string, training: ModelCapabilities["training"]["support
 function score(overrides: Partial<BenchmarkScore> = {}): BenchmarkScore {
   return {
     benchmark: "b1",
-    task: "요약",
+    task: "Summarization",
     dataset: "d1",
     conditions: "c1",
     score: 0.8,
@@ -68,7 +68,7 @@ function entry(ref: ModelReference, benchmarks: BenchmarkScore[]): CatalogEntry 
 const student = model("acme/student");
 
 function profile(selectedModel: ModelReference | null = student, version = 3): AgentProfile {
-  return { agentId: AGENT_ID, name: "초코", selectedModel, avatar: null, version, createdAt: NOW, updatedAt: NOW };
+  return { agentId: AGENT_ID, name: "Choco", selectedModel, avatar: null, version, createdAt: NOW, updatedAt: NOW };
 }
 
 function request(overrides: Partial<TeacherRequest> = {}): TeacherRequest {
@@ -77,8 +77,8 @@ function request(overrides: Partial<TeacherRequest> = {}): TeacherRequest {
     agentId: AGENT_ID,
     profileVersion: 3,
     studentModel: student,
-    messages: [{ role: "user", content: "회의록을 요약하게 가르치고 싶어요", at: NOW }],
-    userGoal: "회의록 요약",
+    messages: [{ role: "user", content: "I want to teach it to summarize meeting notes", at: NOW }],
+    userGoal: "Meeting note summaries",
     ...overrides,
   };
 }
@@ -92,18 +92,18 @@ const ctx = { ownerId: "o", signal: new AbortController().signal };
 beforeEach(() => {
   vi.clearAllMocks();
   getCurrentAgent.mockResolvedValue(ok({ agent: profile() }));
-  lookupCatalogEntry.mockResolvedValue(notConnected("모델 카탈로그"));
+  lookupCatalogEntry.mockResolvedValue(notConnected("Model catalog"));
 });
 
 describe("askTeacher", () => {
   it("puts the stored student model and the goal in context and keeps the teacher model separate", async () => {
-    llmReturns(JSON.stringify({ reply: "요약 수업을 준비해 볼까요?", recommendations: [] }));
+    llmReturns(JSON.stringify({ reply: "Shall we prepare a summarizing lesson?", recommendations: [] }));
     const result = await askTeacher(request(), ctx);
 
     const llmInput = completeChat.mock.calls[0][0];
     expect(llmInput.system).toContain("acme/student");
-    expect(llmInput.system).toContain("회의록 요약");
-    expect(llmInput.system).toContain("다른 모델");
+    expect(llmInput.system).toContain("Meeting note summaries");
+    expect(llmInput.system).toContain("a different model from the student model");
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -127,13 +127,13 @@ describe("askTeacher", () => {
   });
 
   it("passes NOT_CONNECTED through instead of inventing a reply", async () => {
-    completeChat.mockResolvedValue(notConnected("선생님 모델"));
+    completeChat.mockResolvedValue(notConnected("Teacher model"));
     expect(await askTeacher(request(), ctx)).toMatchObject({ ok: false, error: { code: "NOT_CONNECTED" } });
   });
 
   it("uses an injected gateway in place of the default one", async () => {
     const injected = vi.fn(async () =>
-      ok({ text: "대역 응답", provider: "test", modelId: "double", connection: "test_double" as const }),
+      ok({ text: "Test double reply", provider: "test", modelId: "double", connection: "test_double" as const }),
     );
     const result = await askTeacherWith({ completeChat: injected }, request(), ctx);
     expect(injected).toHaveBeenCalledTimes(1);
@@ -142,14 +142,14 @@ describe("askTeacher", () => {
   });
 
   it("drops a leading teacher turn and maps roles for the gateway", async () => {
-    llmReturns("그냥 글");
+    llmReturns("Plain text");
     await askTeacher(
       request({
         messages: [
-          { role: "teacher", content: "안녕", at: NOW },
-          { role: "user", content: "질문1", at: NOW },
-          { role: "teacher", content: "답", at: NOW },
-          { role: "user", content: "질문2", at: NOW },
+          { role: "teacher", content: "Hello", at: NOW },
+          { role: "user", content: "Question 1", at: NOW },
+          { role: "teacher", content: "Answer", at: NOW },
+          { role: "user", content: "Question 2", at: NOW },
         ],
       }),
       ctx,
@@ -158,9 +158,9 @@ describe("askTeacher", () => {
   });
 
   it("keeps a non-JSON answer as the reply, with no recommendations", async () => {
-    llmReturns("형식을 지키지 않은 답변");
+    llmReturns("A reply that ignores the format");
     const result = await askTeacher(request(), ctx);
-    expect(result).toMatchObject({ ok: true, data: { reply: "형식을 지키지 않은 답변", recommendations: [] } });
+    expect(result).toMatchObject({ ok: true, data: { reply: "A reply that ignores the format", recommendations: [] } });
   });
 });
 
@@ -196,7 +196,7 @@ describe("recommendation grounding", () => {
         recommendations: [
           {
             kind: "consider_alternative",
-            summary: "더 낫습니다",
+            summary: "It is better",
             alternativeModel: { source: "hf", modelId: "acme/alt" },
           },
         ],
@@ -235,7 +235,7 @@ describe("recommendation grounding", () => {
     expect(item.kind).toBe("consider_alternative");
     expect(item.alternativeModel?.modelId).toBe("acme/alt");
     expect(item.evidence[0].sourceUrl).toBe(SOURCE);
-    expect(item.limitations).toContain("직접 비교할 수 없습니다");
+    expect(item.limitations).toContain("cannot be compared directly");
   });
 
   it("states no comparison limit when both models share the same benchmark conditions", async () => {

@@ -57,7 +57,7 @@ export function fail(
 }
 
 export function notConnected(feature: string, requiredConfig: string[] = []) {
-  return fail("NOT_CONNECTED", `${feature}이(가) 아직 연결되지 않았습니다.`, { requiredConfig });
+  return fail("NOT_CONNECTED", `${feature} is not connected yet`, { requiredConfig });
 }
 
 /** Passed to every server service by the route layer. */

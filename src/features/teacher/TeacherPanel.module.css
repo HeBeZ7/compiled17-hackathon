@@ -1,18 +1,33 @@
+/* Ivory glass over the 3D canvas. Colors come from tokens so the panel stays in the shared palette. */
 .shell {
   display: flex;
   width: 100%;
-  max-width: 480px;
+  max-width: 500px;
   min-height: 0;
   max-height: 100%;
 }
 
-.panel {
+.shell .panel {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: var(--aa-space-3);
   min-width: 0;
   min-height: 0;
+  background: color-mix(in srgb, var(--aa-color-background) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--aa-color-surface) 80%, transparent);
+  border-radius: calc(var(--aa-radius-lg) + 6px);
+  box-shadow: var(--aa-shadow-raised);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .shell .panel {
+    background: var(--aa-color-background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .head {
@@ -24,7 +39,17 @@
 }
 
 .head h2 {
-  font-size: 1.5rem;
+  color: var(--aa-color-ink-900);
+  font-family: var(--aa-font-display);
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+/* Focus lands here by script when the dialog opens; the title itself is not a control. */
+.head h2:focus {
+  outline: none;
 }
 
 .scroll {
@@ -35,6 +60,7 @@
   gap: var(--aa-space-3);
   min-height: 96px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .scroll > button,
@@ -47,13 +73,13 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--aa-space-1);
-  padding: var(--aa-space-3);
-  background: var(--aa-color-sky-100);
-  border-radius: var(--aa-radius-md);
+  padding: var(--aa-space-3) var(--aa-space-4);
+  background: var(--aa-color-lavender-100);
+  border-radius: var(--aa-radius-lg);
 }
 
 .caption {
-  color: var(--aa-color-ink-600);
+  color: var(--aa-color-lavender-700);
   font-size: 0.8125rem;
   font-weight: 700;
 }
@@ -66,6 +92,7 @@
 .meta {
   color: var(--aa-color-ink-600);
   font-size: 0.8125rem;
+  overflow-wrap: anywhere;
 }
 
 .badges {
@@ -74,23 +101,44 @@
   gap: var(--aa-space-1);
 }
 
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  padding: var(--aa-space-4);
+  background: var(--aa-color-surface);
+  border-radius: var(--aa-radius-lg) var(--aa-radius-lg) var(--aa-radius-lg) var(--aa-radius-sm);
+  box-shadow: var(--aa-shadow-soft);
+}
+
+.welcomeText {
+  color: var(--aa-color-ink-900);
+  font-family: var(--aa-font-display);
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 .line {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--aa-space-2);
-  padding: var(--aa-space-3);
+  padding: var(--aa-space-3) var(--aa-space-4);
   background: var(--aa-color-mint-100);
-  border-radius: var(--aa-radius-md);
+  border-radius: var(--aa-radius-lg) var(--aa-radius-lg) var(--aa-radius-lg) var(--aa-radius-sm);
 }
 
 .line[data-role="user"] {
   align-self: flex-end;
   max-width: 90%;
-  background: var(--aa-color-sky-100);
+  background: var(--aa-color-lavender-100);
+  border-radius: var(--aa-radius-lg) var(--aa-radius-lg) var(--aa-radius-sm) var(--aa-radius-lg);
 }
 
 .text {
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
@@ -118,12 +166,13 @@
   width: 100%;
   padding: var(--aa-space-3);
   background: var(--aa-color-surface);
-  border: 2px solid var(--aa-color-line);
+  border: 1px solid var(--aa-color-line);
   border-radius: var(--aa-radius-md);
 }
 
 .recommendation h3 {
   font-size: 1.0625rem;
+  font-weight: 800;
 }
 
 .alternative {
@@ -164,13 +213,19 @@
   font-weight: 700;
 }
 
+/* The height cap keeps a resized field from pushing the actions off a short screen. */
 .form textarea {
   width: 100%;
+  max-height: 30dvh;
   padding: var(--aa-space-3);
   resize: vertical;
-  background: var(--aa-color-background);
+  background: var(--aa-color-surface);
   border: 2px solid var(--aa-color-line);
   border-radius: var(--aa-radius-md);
+}
+
+.form textarea:focus {
+  border-color: var(--aa-color-lavender-500);
 }
 
 .actions {
@@ -178,4 +233,27 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--aa-space-2);
+}
+
+@media (max-width: 480px) {
+  .shell .panel {
+    padding: var(--aa-space-4);
+    border-radius: var(--aa-radius-lg);
+  }
+
+  .head h2 {
+    font-size: 1.375rem;
+  }
+
+  .welcomeText {
+    font-size: 1.25rem;
+  }
+
+  .form textarea {
+    resize: none;
+  }
+
+  .actions > button {
+    flex: 1 1 auto;
+  }
 }

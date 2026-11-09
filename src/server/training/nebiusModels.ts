@@ -37,8 +37,8 @@ export function nebiusTrainingClaim(modelId: string): CapabilityClaim {
       checkedAt: CHECKED_AT,
       note:
         methods.length > 0
-          ? `Nebius 공식 표 기준 지원 방식: ${methods.join(", ")}. 현재 계정 실행은 미확인.`
-          : "Nebius 파인튜닝 지원 표에 없는 모델.",
+          ? `Methods in the official Nebius table: ${methods.join(", ")} · not verified on the current account`
+          : "Not in the Nebius fine-tuning support table",
     },
   };
 }

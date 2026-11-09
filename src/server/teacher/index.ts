@@ -52,13 +52,13 @@ export async function askTeacherWith(
 
   const profile = current.data.agent;
   if (!profile || profile.agentId !== input.agentId) {
-    return fail("NOT_FOUND", "이 에이전트를 찾지 못했습니다. 에이전트를 다시 불러와 주세요.");
+    return fail("NOT_FOUND", "Agent not found · please reload your agent");
   }
   if (profile.version !== input.profileVersion || !sameSelection(profile.selectedModel, input.studentModel)) {
-    return fail("CONFLICT", "에이전트 정보가 바뀌었습니다. 최신 모델 기준으로 다시 물어봐 주세요.");
+    return fail("CONFLICT", "Agent details changed · please ask again with the latest model");
   }
   if (input.messages.at(-1)?.role !== "user") {
-    return fail("INVALID_REQUEST", "마지막 메시지는 사용자의 말이어야 합니다.");
+    return fail("INVALID_REQUEST", "The last message must come from the user");
   }
 
   const studentModel = profile.selectedModel;
@@ -68,7 +68,7 @@ export async function askTeacherWith(
 
   const completion = await deps.completeChat(toLlmRequest(system, input.messages), ctx);
   if (!completion.ok) return completion;
-  if (!completion.data.text.trim()) return fail("PROVIDER_ERROR", "선생님 모델이 빈 응답을 보냈습니다.", { retryable: true });
+  if (!completion.data.text.trim()) return fail("PROVIDER_ERROR", "The teacher model sent an empty reply", { retryable: true });
 
   const output = parseTeacherOutput(completion.data.text);
   const recommendations = await groundRecommendations(output.recommendations, {

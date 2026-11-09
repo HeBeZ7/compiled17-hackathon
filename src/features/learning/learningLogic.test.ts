@@ -40,7 +40,7 @@ const model: ModelReference = {
   licenseRef: null,
   capabilities: { listed: unknown, accessible: unknown, filesPreparable: unknown, inference: unknown, training: unknown, accountVerified: unknown },
 };
-const agent: AgentProfile = { agentId: ID, name: "초코", selectedModel: model, avatar: null, version: 2, createdAt: AT, updatedAt: AT };
+const agent: AgentProfile = { agentId: ID, name: "Choco", selectedModel: model, avatar: null, version: 2, createdAt: AT, updatedAt: AT };
 const dataset: TrainingDataset = {
   datasetId: "d1",
   fileName: "a.jsonl",
@@ -113,12 +113,12 @@ describe("status copy", () => {
 
   it("does not present a cancel request as a confirmed cancel", () => {
     expect(TRAINING_STATUS_COPY.cancel_requested.label).not.toBe(TRAINING_STATUS_COPY.canceled.label);
-    expect(TRAINING_STATUS_COPY.cancel_requested.detail).toContain("확정된 것이 아니며");
+    expect(TRAINING_STATUS_COPY.cancel_requested.detail).toContain("not confirmed until the provider acknowledges");
   });
 
   it("does not present an unknown status as failed", () => {
     expect(TRAINING_STATUS_COPY.status_unknown.tone).not.toBe("danger");
-    expect(TRAINING_STATUS_COPY.status_unknown.detail).toContain("자동으로 다시 요청하지 않습니다");
+    expect(TRAINING_STATUS_COPY.status_unknown.detail).toContain("never resent automatically");
   });
 });
 
@@ -174,7 +174,7 @@ describe("mergeRun", () => {
 
 describe("price display", () => {
   it("shows unknown rather than zero, and keeps a real zero", () => {
-    expect(formatAmount(null, "USD")).toBe("미확인");
+    expect(formatAmount(null, "USD")).toBe("Unknown · not free");
     expect(formatAmount(0, "USD")).toBe("0 USD");
   });
 
@@ -243,7 +243,7 @@ describe("result facts stay separate", () => {
   it("does not call an unobserved artifact confirmed", () => {
     expect(describeArtifact(artifact, "a1").tone).toBe("warn");
     expect(describeArtifact({ ...artifact, existenceVerified: true, verifiedAt: AT }, "a1").tone).toBe("ok");
-    expect(describeArtifact(null, null).label).toBe("결과물 없음");
+    expect(describeArtifact(null, null).label).toBe("No artifact");
   });
 
   it("does not call a loaded model usable until a real response was observed", () => {

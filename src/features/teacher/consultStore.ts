@@ -46,7 +46,7 @@ export const useConsultStore = create<ConsultState>((set, get) => {
       return;
     }
     if (!isCurrentResponse(result.data, { requestId, agent: get().agent ?? agent })) {
-      set({ waiting: false, notice: "에이전트 정보가 바뀌어 늦게 도착한 답변을 버렸습니다. 다시 보내 주세요." });
+      set({ waiting: false, notice: "Agent details changed so the late reply was discarded · please send again" });
       return;
     }
     const { reply, replySource, teacherModel, connection, recommendations } = result.data;
@@ -80,20 +80,20 @@ export const useConsultStore = create<ConsultState>((set, get) => {
         return;
       }
       if (modelKey(previous.selectedModel) !== modelKey(agent.selectedModel)) {
-        const name = agent.selectedModel?.modelId ?? "선택 없음";
+        const name = agent.selectedModel?.modelId ?? "None selected";
         set({
           agent,
           lines: [],
           waiting: false,
           error: null,
-          notice: `학생 모델이 ${name}(으)로 바뀌어 새 상담을 시작합니다. 이전 대화는 이전 모델 기준이었습니다.`,
+          notice: `Student model changed to ${name} · starting a new consultation because the earlier one was about the previous model`,
         });
         return;
       }
       set({
         agent,
         waiting: false,
-        notice: wasWaiting ? "에이전트 정보가 바뀌어 기다리던 답변을 취소했습니다. 다시 보내 주세요." : get().notice,
+        notice: wasWaiting ? "Agent details changed so the pending reply was canceled · please send again" : get().notice,
       });
     },
 
@@ -121,7 +121,7 @@ export const useConsultStore = create<ConsultState>((set, get) => {
     },
 
     cancel: () => {
-      if (abortInFlight()) set({ waiting: false, notice: "답변 기다리기를 취소했습니다." });
+      if (abortInFlight()) set({ waiting: false, notice: "Stopped waiting for the reply" });
     },
   };
 });

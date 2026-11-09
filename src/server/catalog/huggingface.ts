@@ -30,10 +30,10 @@ function authHeaders(): Record<string, string> {
 }
 
 function httpFailure(status: number): { ok: false; error: ApiError } {
-  if (status === 429) return fail("RATE_LIMITED", "Hugging Face 요청 한도를 초과했습니다.", { retryable: true });
+  if (status === 429) return fail("RATE_LIMITED", "Hugging Face request limit exceeded", { retryable: true });
   // The Hub answers 401 for a missing repo as well as for a forbidden one.
-  if (status === 401 || status === 403 || status === 404) return fail("NOT_FOUND", "모델을 찾을 수 없거나 접근 권한이 없습니다.");
-  return fail("PROVIDER_ERROR", `Hugging Face 오류가 발생했습니다. (HTTP ${status})`, { retryable: status >= 500 });
+  if (status === 401 || status === 403 || status === 404) return fail("NOT_FOUND", "Model not found or access denied");
+  return fail("PROVIDER_ERROR", `Hugging Face error (HTTP ${status})`, { retryable: status >= 500 });
 }
 
 async function hubFetch(url: string, method: "GET" | "HEAD", signal: AbortSignal): Promise<ServiceResult<Response>> {
@@ -48,8 +48,8 @@ async function hubFetch(url: string, method: "GET" | "HEAD", signal: AbortSignal
     return ok(response);
   } catch {
     return timeout.aborted
-      ? fail("PROVIDER_TIMEOUT", "Hugging Face 응답 시간이 초과되었습니다.", { retryable: true })
-      : fail("PROVIDER_ERROR", "Hugging Face에 연결하지 못했습니다.", { retryable: true });
+      ? fail("PROVIDER_TIMEOUT", "Hugging Face response timed out", { retryable: true })
+      : fail("PROVIDER_ERROR", "Could not connect to Hugging Face", { retryable: true });
   }
 }
 
@@ -82,17 +82,17 @@ function toEntry(model: HfModel, checkedAt: string): CatalogEntry {
       revision: model.sha ?? null,
       licenseRef: licenseOf(model),
       capabilities: {
-        listed: observed("Hugging Face Hub 응답에 존재."),
+        listed: observed("Present in the Hugging Face Hub response"),
         accessible: isOpen
-          ? observed("Hub 메타데이터상 공개 모델.")
-          : unknownClaim(`접근 제한 상태: ${model.gated === undefined || model.gated === null ? "미확인" : String(model.gated)}. 계정 승인 여부는 미확인.`),
+          ? observed("Public model according to Hub metadata")
+          : unknownClaim(`Access restriction: ${model.gated === undefined || model.gated === null ? "unknown" : String(model.gated)} · account approval unknown`),
         filesPreparable:
           isOpen && hasWeights
-            ? observed("가중치 파일 목록을 확인. 실제 다운로드는 하지 않음.")
-            : unknownClaim("가중치 파일 접근을 확인하지 못함."),
-        inference: unknownClaim("이 카탈로그는 추론 가능 여부를 확인하지 않음."),
+            ? observed("Weight file list confirmed · not actually downloaded")
+            : unknownClaim("Weight file access could not be confirmed"),
+        inference: unknownClaim("This catalog does not check inference availability"),
         training: nebiusTrainingClaim(model.id),
-        accountVerified: unknownClaim("현재 계정에서 실행을 확인하지 않음."),
+        accountVerified: unknownClaim("Not verified on the current account"),
       },
     },
     displayName: model.id.split("/")[1] ?? model.id,
@@ -127,7 +127,7 @@ export async function searchHub(input: HubSearch): Promise<ServiceResult<{ items
   if (!result.data.ok) return httpFailure(result.data.status);
 
   const parsed = z.array(HfModel).safeParse(await result.data.json().catch(() => null));
-  if (!parsed.success) return fail("PROVIDER_ERROR", "Hugging Face 응답을 해석하지 못했습니다.", { retryable: true });
+  if (!parsed.success) return fail("PROVIDER_ERROR", "Could not parse the Hugging Face response", { retryable: true });
 
   const fetchedAt = new Date().toISOString();
   return ok({
@@ -138,8 +138,8 @@ export async function searchHub(input: HubSearch): Promise<ServiceResult<{ items
 }
 
 export async function lookupHubModel(modelId: string, revision: string | undefined, signal: AbortSignal): Promise<ServiceResult<CatalogEntry>> {
-  if (!MODEL_ID.test(modelId)) return fail("INVALID_REQUEST", "모델 ID 형식이 올바르지 않습니다.");
-  if (revision !== undefined && !REVISION.test(revision)) return fail("INVALID_REQUEST", "revision은 40자리 커밋 해시여야 합니다.");
+  if (!MODEL_ID.test(modelId)) return fail("INVALID_REQUEST", "Invalid model ID format");
+  if (revision !== undefined && !REVISION.test(revision)) return fail("INVALID_REQUEST", "Revision must be a 40-character commit hash");
 
   const path = `${HF_ORIGIN}/api/models/${modelId}${revision ? `/revision/${revision}` : ""}`;
   const result = await hubFetch(path, "GET", signal);
@@ -147,13 +147,13 @@ export async function lookupHubModel(modelId: string, revision: string | undefin
   if (!result.data.ok) return httpFailure(result.data.status);
 
   const parsed = HfModel.safeParse(await result.data.json().catch(() => null));
-  if (!parsed.success) return fail("PROVIDER_ERROR", "Hugging Face 응답을 해석하지 못했습니다.", { retryable: true });
+  if (!parsed.success) return fail("PROVIDER_ERROR", "Could not parse the Hugging Face response", { retryable: true });
   return ok(toEntry(parsed.data, new Date().toISOString()));
 }
 
 /** Touches a small real file at a pinned revision, which proves this server's access. */
 export async function checkHubFileAccess(modelId: string, revision: string, signal: AbortSignal): Promise<ServiceResult<boolean>> {
-  if (!MODEL_ID.test(modelId) || !REVISION.test(revision)) return fail("INVALID_REQUEST", "모델 식별자 형식이 올바르지 않습니다.");
+  if (!MODEL_ID.test(modelId) || !REVISION.test(revision)) return fail("INVALID_REQUEST", "Invalid model identifier format");
   const result = await hubFetch(`${HF_ORIGIN}/${modelId}/resolve/${revision}/config.json`, "HEAD", signal);
   if (!result.ok) return result;
   if (result.data.ok) return ok(true);
