@@ -19,6 +19,6 @@ export default defineConfig({
     url: `${baseURL}/api/health`,
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { AA_DIST_DIR: ".next-e2e", AA_DATA_DIR: ".data/e2e" },
+    env: { AA_DIST_DIR: ".next-e2e", AA_DATA_DIR: ".data/e2e", NEXT_PUBLIC_AA_TEST_MODE: "1" },
   },
 });

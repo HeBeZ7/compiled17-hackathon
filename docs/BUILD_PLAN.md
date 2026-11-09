@@ -198,3 +198,5 @@ A는 통합 후 `docs/coordination/STATUS.md` 하나에 다음을 수합한다. 
 이번 변경은 핵심 문서 네 개(`AGENTS.md`, `CLAUDE.md`, `docs/PRODUCT_SPEC.md`, `docs/BUILD_PLAN.md`)를 준비하는 작업이다. 앱 생성, 다른 Claude 세션 시작, Codespaces 조작, GPU 생성·학습, 공개 배포는 이 문서 작성으로 수행되지 않았다.
 
 제작에 필요한 운영 기록·테스트·앱 코드는 A~F가 실제 개발을 시작하면서 추가한다. 현재 존재하지 않는 경로를 이미 구현됐다고 해석하지 않는다.
+
+**진행 기록 (A, 2026-11-09):** A-0~A-2 수행. 기반 커밋 `7a81abd`, 역할별 경로는 [coordination/ASSIGNMENTS.md](coordination/ASSIGNMENTS.md), 제작 선택은 [coordination/DECISIONS.md](coordination/DECISIONS.md). 소유 경로는 §4에서 변경 없음. 기반은 앱 뼈대와 계약이며 이동·카탈로그·상담·학습 기능은 아직 구현되지 않았다.

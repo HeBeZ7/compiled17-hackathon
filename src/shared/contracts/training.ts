@@ -90,7 +90,11 @@ export const TrainingRun = z.object({
   trainingCompleted: z.boolean(),
   runtimeReady: z.boolean(),
   evaluationResult: TrainingEvaluation.nullable(),
-  /** Last status the provider actually reported. A failed poll does not change it. */
+  /**
+   * When the provider last reported `status`. A failed poll keeps `status` and
+   * sets `pollError`. `status_unknown` is only for a create whose outcome is
+   * unknown, so it never replaces an observed status.
+   */
   lastObservedAt: IsoTimestamp.nullable(),
   pollError: ApiError.nullable(),
   createdAt: IsoTimestamp,
