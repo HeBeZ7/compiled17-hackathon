@@ -1,39 +1,55 @@
 import "server-only";
-import {
-  notConnected,
-  type CreateTrainingRunRequest,
-  type RequestContext,
-  type ServiceResult,
-  type TrainingDataset,
-  type TrainingRun,
-  type TrainingRunList,
-  type TrainingSpec,
-  type TrainingValidation,
+import { operatorPriceProvider } from "@/server/pricing/service";
+import { getStore } from "@/server/store";
+import type {
+  CreateTrainingRunRequest,
+  RequestContext,
+  ServiceResult,
+  TrainingDataset,
+  TrainingRun,
+  TrainingRunList,
+  TrainingSpec,
+  TrainingValidation,
 } from "@/shared/contracts";
+import { nebiusTrainingProvider } from "./provider";
+import { createTrainingService, readMaxApprovedUsd } from "./service";
 
-// E owns this module. Track requests durably through the store's insertIfAbsent
-// with COLLECTIONS.trainingRequests keyed by requestKey, before calling a provider.
+// E owns this module. The factory below is the injection point for tests.
 
-export async function uploadDataset(_form: FormData, _ctx: RequestContext): Promise<ServiceResult<TrainingDataset>> {
-  return notConnected("학습 자료 저장");
+export { TRAINING_MAX_USD_ENV, createTrainingService, readMaxApprovedUsd } from "./service";
+export type { TrainingDeps } from "./service";
+export { nebiusTrainingProvider } from "./provider";
+export type { TrainingProvider } from "./provider";
+
+function service() {
+  return createTrainingService({
+    store: getStore(),
+    provider: nebiusTrainingProvider,
+    prices: operatorPriceProvider,
+    maxApprovedUsd: readMaxApprovedUsd,
+  });
 }
 
-export async function validateTraining(_spec: TrainingSpec, _ctx: RequestContext): Promise<ServiceResult<TrainingValidation>> {
-  return notConnected("학습 조건 확인");
+export async function uploadDataset(form: FormData, ctx: RequestContext): Promise<ServiceResult<TrainingDataset>> {
+  return service().uploadDataset(form, ctx);
 }
 
-export async function createTrainingRun(_input: CreateTrainingRunRequest, _ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
-  return notConnected("GPU 학습");
+export async function validateTraining(spec: TrainingSpec, ctx: RequestContext): Promise<ServiceResult<TrainingValidation>> {
+  return service().validateTraining(spec, ctx);
 }
 
-export async function listTrainingRuns(_ctx: RequestContext): Promise<ServiceResult<TrainingRunList>> {
-  return notConnected("GPU 학습");
+export async function createTrainingRun(input: CreateTrainingRunRequest, ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
+  return service().createTrainingRun(input, ctx);
 }
 
-export async function getTrainingRun(_runId: string, _ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
-  return notConnected("GPU 학습");
+export async function listTrainingRuns(ctx: RequestContext): Promise<ServiceResult<TrainingRunList>> {
+  return service().listTrainingRuns(ctx);
 }
 
-export async function cancelTrainingRun(_runId: string, _ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
-  return notConnected("GPU 학습");
+export async function getTrainingRun(runId: string, ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
+  return service().getTrainingRun(runId, ctx);
+}
+
+export async function cancelTrainingRun(runId: string, ctx: RequestContext): Promise<ServiceResult<TrainingRun>> {
+  return service().cancelTrainingRun(runId, ctx);
 }

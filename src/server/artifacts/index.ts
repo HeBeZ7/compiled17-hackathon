@@ -1,16 +1,25 @@
 import "server-only";
-import { notConnected, type ModelArtifact, type RequestContext, type RuntimeStatus, type ServiceResult } from "@/shared/contracts";
+import { getStore } from "@/server/store";
+import type { ModelArtifact, RequestContext, RuntimeStatus, ServiceResult } from "@/shared/contracts";
+import { createArtifactService, nebiusRuntimeProvider } from "./service";
 
 // E owns this module.
 
-export async function getArtifact(_artifactId: string, _ctx: RequestContext): Promise<ServiceResult<ModelArtifact>> {
-  return notConnected("학습 결과물");
+export { createArtifactService, nebiusRuntimeProvider } from "./service";
+export type { ArtifactDeps, ArtifactRecord, RuntimeProvider } from "./service";
+
+function service() {
+  return createArtifactService({ store: getStore(), runtime: nebiusRuntimeProvider });
 }
 
-export async function getRuntimeStatus(_artifactId: string, _ctx: RequestContext): Promise<ServiceResult<RuntimeStatus>> {
-  return notConnected("결과 모델 실행");
+export async function getArtifact(artifactId: string, ctx: RequestContext): Promise<ServiceResult<ModelArtifact>> {
+  return service().getArtifact(artifactId, ctx);
 }
 
-export async function loadArtifactRuntime(_artifactId: string, _ctx: RequestContext): Promise<ServiceResult<RuntimeStatus>> {
-  return notConnected("결과 모델 실행");
+export async function getRuntimeStatus(artifactId: string, ctx: RequestContext): Promise<ServiceResult<RuntimeStatus>> {
+  return service().getRuntimeStatus(artifactId, ctx);
+}
+
+export async function loadArtifactRuntime(artifactId: string, ctx: RequestContext): Promise<ServiceResult<RuntimeStatus>> {
+  return service().loadArtifactRuntime(artifactId, ctx);
 }
