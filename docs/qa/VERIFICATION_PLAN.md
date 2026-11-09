@@ -3,6 +3,30 @@
 대상 독자: A~E 담당자. 기준: PRODUCT_SPEC 0.2, BUILD_PLAN 0.2.
 기반 커밋 `7a81abd`의 계약(`src/shared/contracts/`)에 맞췄다. `tests/support/ports.ts`의 포트와 testid는 F의 가정이며 제품 계약이 아니다.
 
+## 0. Redesign cases (3D first-person classroom and English UI)
+
+This section supersedes the 2D classroom rows in sections 2 to 4. Evidence grades are the ones in section 1
+
+| Area | Acceptance | Cases | Grade | File |
+| --- | --- | --- | --- | --- |
+| Movement, yaw-relative WASD, speed, frame rate, collision, held input | A-15, R-021, R-022, R-024 | C0 to C17, C19 | BROWSER, synthetic blur, visibility and pointercancel events | `tests/e2e/classroom-movement.spec.ts` |
+| Capture state machine | A-15, R-022, R-024 | PL1 to PL9, PL12 | FIXTURE, Pointer Lock API double | `tests/e2e/classroom-pointer-lock.spec.ts` |
+| Real pointer lock and real Escape | A-15 | PL10, PL11 | BROWSER, recorded as not-run when headless refuses | same file |
+| Touch joystick and look at 390 px | R-022 | J1 to J7 | BROWSER, touch emulation through the CDP input pipeline, not a device | `tests/e2e/classroom-touch.spec.ts` |
+| Teacher and station reach, aim, on foot, HUD layout | R-023, A-13 part | R1 to R3, R5 to R8, N1 to N3 | BROWSER | `tests/e2e/classroom-surface.spec.ts` |
+| Appearance on the My agent pill, My character card and desk frame | A-04, R-027 | V1 to V8 | BROWSER, catalog search doubled | `tests/e2e/avatar-model-link.spec.ts` |
+| WebGL refused | R-022 fallback | F1, F2 | BROWSER, getContext refused | `tests/e2e/classroom-fallback.spec.ts` |
+| Landing | R-025 | L1, L2 | BROWSER | `tests/e2e/landing-and-copy.spec.ts` |
+| Showroom and List view | R-026, A-16 part | S1 to S4, N4 | BROWSER, catalog doubled with invented identifiers, so real identifiers are not covered | `tests/e2e/showroom.spec.ts`, surface spec |
+| English copy with no sentence periods | R-028 | K1 to K5, F1, META rule tests | BROWSER and unit | `tests/e2e/landing-and-copy.spec.ts`, surface spec, `tests/integration/copy-rules.test.ts` |
+| Price and status truth | A-08 to A-11 part | U1 to U9 | FIXTURE | `tests/e2e/learning-truth.spec.ts` |
+
+Retired with the 2D classroom  R4 tested a canvas speech bubble and O1 tested a desk occluding the player sprite  Neither exists in first person  The dpad cases became J1 to J7
+
+The frame on the desk is judged by rendered canvas pixels and the hook's `avatarFrame` status  The hook does not expose the texture source  V6 uses tight bounds on the card image and wider bounds on the frame because perspective foreshortens it
+
+Still needs a person or the final commit: real OS window switch, real touch device, Korean IME with WASD, real GPU rendering, A-17 screenshot comparison, A-18 measured performance
+
 ## 1. 증거 등급
 
 결과는 아래 등급을 섞어 보고하지 않는다. 낮은 등급의 통과로 높은 등급을 통과 처리하지 않는다.

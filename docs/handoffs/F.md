@@ -2,6 +2,31 @@
 
 대상 독자: A와 B~E 담당자.
 
+## Redesign update (branch `aa/redesign-f`, base `dc48bef`)
+
+R-021 to R-030, A-15, A-16  **Specs are written against the agreed hook and B's code but are almost entirely unexecuted  Nothing here is a verification result for the redesign**
+
+| Item | State |
+| --- | --- |
+| `npm run verify` | Passes on `dc48bef` plus these tests, no product code changed |
+| Ran in a browser on `dc48bef` | `tests/e2e/landing-and-copy.spec.ts` L1, L2, K1 and the smoke sideways-scroll, NOT_CONNECTED and store persistence cases: 10 passed, 2 failed |
+| Those 2 failures | L2 desktop was a 5 s URL wait during first dev compile  L1 narrow expected the Main navigation, which is `display: none` below 720 px  Both specs were changed afterwards and **not re-run** |
+| Against `aa/redesign-b` `002d930` | Temporary merge made and aborted  The run was stopped by a deadline before any case finished  **0 cases executed** |
+| Waiting for B to be run | C0 to C17, C19, PL1 to PL12, J1 to J7, R1 to R3, R5 to R8, N1 to N3, K4, K5, F1, V7, V8, U1 to U9, smoke classroom flow |
+| Waiting for C to land | V1 to V6, N4, K2, K3, S1 to S4, F2  C was still at `7aa3347` with uncommitted work |
+
+Spec risks to expect on the first run: hook shape and HUD testids were read from B's code, showroom testids and the `Next: name and appearance` button from C's uncommitted work  Hue thresholds and the frame viewing pose in `tests/e2e/support/app.ts` are calculated and have never been measured  A failure on the first run may be a spec defect, not a product defect
+
+Not runnable headless, or unknown: real pointer lock and real Escape (PL10, PL11 record not-run if refused, availability unmeasured), real OS window switch, real touch device, Korean IME  The touch cases use `test.use` in the spec because `playwright.config.ts` is A's  A may prefer a named project
+
+Observation O-12 for A: the landing header hides its Main navigation below 720 px with no replacement, while R-025 lists navigation  L1 only requires it above 720 px, pending A's decision
+
+Product defects found: none, because the classroom specs have not run
+
+Changed: `tests/e2e/**`, `tests/integration/copy-rules.test.ts`, `docs/qa/VERIFICATION_PLAN.md` section 0, this file
+
+Reproduce: `git merge --no-commit --no-ff aa/redesign-b`, `rm -rf .next-e2e .data/e2e`, `AA_QA_E2E=1 E2E_PORT=3105 npm run test:e2e`, `git merge --abort`
+
 ## 상태
 
 **최신 검증 대상은 통합 커밋 `9ffa6f4`다. 자동 검증과 build를 실행했고 실제 공급자 연동은 검증하지 않았다.** 상세 결과는 [RESULTS-9ffa6f4.md](../qa/RESULTS-9ffa6f4.md), 그 이전은 [RESULTS-b6ad9a7.md](../qa/RESULTS-b6ad9a7.md)에 있다.
