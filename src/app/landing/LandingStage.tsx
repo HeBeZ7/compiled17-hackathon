@@ -1,18 +1,22 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { detectWebGL } from "@/shared/world/quality";
 import styles from "./LandingStage.module.css";
 
 const LandingScene = dynamic(() => import("./LandingScene").then((module) => module.LandingScene), { ssr: false });
 
-export function LandingStage() {
-  const [webgl, setWebgl] = useState<boolean | null>(null);
+const subscribeNever = () => () => {};
 
-  useEffect(() => {
-    setWebgl(detectWebGL());
-  }, []);
+let webglSupport: boolean | undefined;
+function cachedWebGL(): boolean {
+  webglSupport ??= detectWebGL();
+  return webglSupport;
+}
+
+export function LandingStage() {
+  const webgl = useSyncExternalStore(subscribeNever, cachedWebGL, () => false);
 
   return (
     <div className={styles.stage} aria-hidden="true">
