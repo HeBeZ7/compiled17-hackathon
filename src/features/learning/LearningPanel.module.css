@@ -1,15 +1,23 @@
+.shell {
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  min-height: 0;
+  max-height: 100%;
+}
+
 .panel {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--aa-space-3);
-  width: 100%;
-  max-width: 440px;
-  max-height: 100%;
-  overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 .head {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: var(--aa-space-3);
@@ -17,4 +25,241 @@
 
 .head h2 {
   font-size: 1.5rem;
+}
+
+.scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--aa-space-4);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.scroll > a {
+  align-self: flex-start;
+}
+
+.step,
+.ledger,
+.pending {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  padding: var(--aa-space-4);
+  background: var(--aa-color-background);
+  border: 2px solid var(--aa-color-line);
+  border-radius: var(--aa-radius-md);
+}
+
+.pending {
+  background: var(--aa-color-unknown-bg);
+}
+
+.step h3,
+.ledger h3 {
+  font-size: 1.0625rem;
+}
+
+.help {
+  color: var(--aa-color-ink-600);
+  font-size: 0.875rem;
+}
+
+.warn {
+  color: var(--aa-color-warn-text);
+  font-size: 0.875rem;
+}
+
+.text {
+  white-space: pre-wrap;
+}
+
+.field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--aa-space-1);
+  min-width: 0;
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--aa-space-2) var(--aa-space-3);
+  font-weight: 400;
+  background: var(--aa-color-surface);
+  border: 2px solid var(--aa-color-line);
+  border-radius: var(--aa-radius-sm);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aa-space-2);
+  width: 100%;
+}
+
+.row .field {
+  flex: 1 1 140px;
+  width: auto;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  font-size: 0.875rem;
+}
+
+.check input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aa-space-1);
+  width: 100%;
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: minmax(84px, 112px) minmax(0, 1fr);
+  gap: var(--aa-space-2);
+  font-size: 0.875rem;
+}
+
+.fact dt {
+  color: var(--aa-color-ink-600);
+}
+
+.fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.issues,
+.blockers {
+  width: 100%;
+  padding-left: var(--aa-space-4);
+  color: var(--aa-color-ink-600);
+  font-size: 0.875rem;
+  list-style: disc;
+}
+
+.issues {
+  color: var(--aa-color-danger-text);
+}
+
+.validation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  width: 100%;
+}
+
+.buttons,
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--aa-space-2);
+}
+
+.run {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--aa-space-4);
+}
+
+.run > button {
+  align-self: flex-start;
+}
+
+.cancel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  width: 100%;
+}
+
+.ledger {
+  align-items: stretch;
+}
+
+.ledgerRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-1);
+  padding-top: var(--aa-space-2);
+  border-top: 1px solid var(--aa-color-line);
+}
+
+.ledgerHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--aa-space-2);
+  width: 100%;
+}
+
+.inference,
+.inferenceResult {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  width: 100%;
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aa-space-2);
+  width: 100%;
+}
+
+.historyItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--aa-space-2);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--aa-space-2) var(--aa-space-3);
+  text-align: left;
+  cursor: pointer;
+  background: var(--aa-color-surface);
+  border: 2px solid var(--aa-color-line);
+  border-radius: var(--aa-radius-sm);
+}
+
+.step > [data-testid="connection-notice"],
+.pending > [data-testid="connection-notice"],
+.validation > [data-testid="connection-notice"],
+.cancel > [data-testid="connection-notice"],
+.ledgerRow > [data-testid="connection-notice"] {
+  align-self: stretch;
+}
+
+.modelName {
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
