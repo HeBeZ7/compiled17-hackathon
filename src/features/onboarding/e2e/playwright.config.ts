@@ -17,7 +17,8 @@ export default defineConfig({
     { name: "narrow", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 780 }, hasTouch: true } },
   ],
   webServer: {
-    command: `rm -rf .data/e2e-c && npx next dev -H 127.0.0.1 -p ${port}`,
+    // .next-e2e is shared with the root suite, and a cache left by another run makes pages reload in a loop.
+    command: `rm -rf .data/e2e-c .next-e2e && npx next dev -H 127.0.0.1 -p ${port}`,
     cwd: "../../../..",
     url: `${baseURL}/api/health`,
     reuseExistingServer: false,
