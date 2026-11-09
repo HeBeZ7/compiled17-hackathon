@@ -16,15 +16,15 @@ describe("photo file checks", () => {
   });
 
   it("names the problem for empty, oversized and non-image files", () => {
-    expect(describePhotoProblem({ size: 0 }, PNG)).toContain("비어");
+    expect(describePhotoProblem({ size: 0 }, PNG)).toContain("empty");
     expect(describePhotoProblem({ size: 8 * 1024 * 1024 + 1 }, PNG)).toContain("8MB");
     expect(describePhotoProblem({ size: 100 }, new Uint8Array(12))).toContain("PNG");
     expect(describePhotoProblem({ size: 8 * 1024 * 1024 }, PNG)).toBeNull();
   });
 
   it("rejects decoded sizes outside the supported range", () => {
-    expect(describePhotoSizeProblem(10, 500)).toContain("작습니다");
-    expect(describePhotoSizeProblem(20_000, 500)).toContain("큽니다");
+    expect(describePhotoSizeProblem(10, 500)).toContain("too small");
+    expect(describePhotoSizeProblem(20_000, 500)).toContain("too large");
     expect(describePhotoSizeProblem(800, 600)).toBeNull();
   });
 });

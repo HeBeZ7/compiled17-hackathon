@@ -55,7 +55,7 @@ export function PhotoCropper({
         }
         install({ original, bitmap });
       } catch {
-        if (token === loadToken.current) setProblem("저장된 사진을 다시 자를 수 있게 불러오지 못했습니다. 저장된 외형은 그대로입니다.");
+        if (token === loadToken.current) setProblem("Could not reload the saved photo for cropping  Your saved appearance is unchanged");
       }
     })();
     return () => {
@@ -91,7 +91,7 @@ export function PhotoCropper({
       },
       () => {
         if (token === renderToken.current) {
-          onChange({ status: "failed", message: "사진을 게임용 이미지로 만들지 못했습니다. 다른 사진을 골라 주세요." });
+          onChange({ status: "failed", message: "Could not turn this photo into a game image  Please pick another photo" });
         }
       },
     );
@@ -115,7 +115,7 @@ export function PhotoCropper({
     try {
       bitmap = await createImageBitmap(file);
     } catch {
-      if (token === loadToken.current) reject("사진을 읽지 못했습니다. 파일이 손상되었을 수 있어요.");
+      if (token === loadToken.current) reject("Could not read this photo  The file may be damaged");
       return;
     }
     if (token !== loadToken.current) {
@@ -215,7 +215,7 @@ export function PhotoCropper({
             height={VIEW_SIZE}
             tabIndex={0}
             data-testid="photo-crop-view"
-            aria-label="사진 위치 조정. 끌거나 방향키로 옮길 수 있어요."
+            aria-label="Adjust photo position by dragging or with the arrow keys"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerEnd}
@@ -224,7 +224,7 @@ export function PhotoCropper({
             onKeyDown={handleKeyDown}
           />
         ) : (
-          <p className={styles.dropHint}>사진을 여기로 끌어 놓거나 아래 버튼으로 골라 주세요.</p>
+          <p className={styles.dropHint}>Drop a photo here or pick one with the button below</p>
         )}
       </div>
 
@@ -234,11 +234,11 @@ export function PhotoCropper({
         type="file"
         accept={AVATAR_MIME_TYPES.join(",")}
         data-testid="avatar-photo-input"
-        aria-label="사진 파일 선택"
+        aria-label="Choose a photo file"
         onChange={handleFileInput}
       />
 
-      {busy && <p role="status">사진을 읽는 중입니다.</p>}
+      {busy && <p role="status">Reading the photo</p>}
       {problem && (
         <p className={styles.problem} role="alert" data-testid="avatar-error">
           {problem}
@@ -247,7 +247,7 @@ export function PhotoCropper({
 
       {photo && crop && (
         <label className={styles.zoom}>
-          확대
+          Zoom
           <input
             type="range"
             min={MIN_ZOOM}
@@ -261,18 +261,18 @@ export function PhotoCropper({
 
       <div className={styles.toolRow}>
         <Button variant="secondary" onClick={() => inputRef.current?.click()}>
-          {photo ? "다른 사진 고르기" : "사진 고르기"}
+          {photo ? "Pick another photo" : "Pick a photo"}
         </Button>
         {photo && (
           <Button variant="ghost" onClick={removePhoto}>
-            사진 빼기
+            Remove photo
           </Button>
         )}
       </div>
 
       <p className={styles.note}>
-        PNG, JPEG, WebP · 8MB 이하. 사진은 동그란 스티커 모습 그대로 교실에 나타나요. 배경 제거나 3D 변환, 여러 방향 움직임은
-        아직 제공하지 않습니다.
+        PNG, JPEG or WebP up to 8MB  Your photo appears in the classroom as a round sticker  Background removal, 3D conversion and multi-direction animation are
+        not available
       </p>
     </div>
   );

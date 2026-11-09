@@ -7,30 +7,30 @@ import styles from "./ModelPicker.module.css";
 const MAX_TAGS = 5;
 
 function Benchmarks({ scores }: { scores: BenchmarkScore[] }) {
-  if (scores.length === 0) return <p className={styles.muted}>벤치마크 근거 없음</p>;
+  if (scores.length === 0) return <p className={styles.muted}>No benchmark evidence</p>;
   return (
     <details className={styles.details}>
-      <summary>벤치마크 {scores.length}건</summary>
+      <summary>{scores.length} benchmarks</summary>
       <ul className={styles.evidenceList}>
         {scores.map((score, index) => (
           <li key={`${score.benchmark}-${index}`}>
             <strong>{score.benchmark}</strong> {formatScore(score)}
-            {score.task && ` · 과제 ${score.task}`}
-            {score.dataset && ` · 평가셋 ${score.dataset}`}
-            {score.conditions && ` · 조건 ${score.conditions}`}
-            {score.checkedAt && ` · ${formatDateTime(score.checkedAt)} 확인`}
+            {score.task && ` · task ${score.task}`}
+            {score.dataset && ` · dataset ${score.dataset}`}
+            {score.conditions && ` · conditions ${score.conditions}`}
+            {score.checkedAt && ` · checked ${formatDateTime(score.checkedAt)}`}
             {score.sourceUrl && (
               <>
                 {" · "}
                 <a href={score.sourceUrl} target="_blank" rel="noreferrer">
-                  출처
+                  Source
                 </a>
               </>
             )}
             {score.score !== null && !isComparableScore(score) && (
               <>
                 {" "}
-                <StatusBadge tone="unknown">조건 미확인 · 비교 불가</StatusBadge>
+                <StatusBadge tone="unknown">Conditions unverified · not comparable</StatusBadge>
               </>
             )}
           </li>
@@ -58,19 +58,19 @@ export function ModelCard({
       </header>
       <dl className={styles.facts}>
         <div>
-          <dt>공급처</dt>
+          <dt>Source</dt>
           <dd>
             {ref.source}
             {ref.publisher && ` · ${ref.publisher}`}
           </dd>
         </div>
         <div>
-          <dt>버전</dt>
-          <dd>{ref.revision ? <code>{ref.revision.slice(0, 12)}</code> : "미확인"}</dd>
+          <dt>Revision</dt>
+          <dd>{ref.revision ? <code>{ref.revision.slice(0, 12)}</code> : "Unverified"}</dd>
         </div>
         <div>
-          <dt>라이선스</dt>
-          <dd>{ref.licenseRef ?? "미확인"}</dd>
+          <dt>License</dt>
+          <dd>{ref.licenseRef ?? "Unverified"}</dd>
         </div>
       </dl>
       {tags.length > 0 && (
@@ -89,7 +89,7 @@ export function ModelCard({
         data-testid={`model-option-${ref.modelId}`}
         onClick={onSelect}
       >
-        {selected ? "선택됨" : "이 모델 선택"}
+        {selected ? "Selected" : "Select this model"}
       </Button>
     </article>
   );

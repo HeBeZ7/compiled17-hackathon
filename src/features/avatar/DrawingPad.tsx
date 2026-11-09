@@ -10,24 +10,24 @@ const CANVAS_SIZE = 512;
 
 // These are the user's paints, not interface colors, so they do not come from the design tokens.
 const PAINTS = [
-  { value: "#2B2B33", name: "검정" },
-  { value: "#FFFFFF", name: "흰색" },
-  { value: "#E5484D", name: "빨강" },
-  { value: "#F76B15", name: "주황" },
-  { value: "#FFC53D", name: "노랑" },
-  { value: "#30A46C", name: "초록" },
-  { value: "#3E93DE", name: "파랑" },
-  { value: "#8E4EC6", name: "보라" },
-  { value: "#F4A6C0", name: "분홍" },
-  { value: "#F6D3B3", name: "밝은 살구" },
-  { value: "#B9825A", name: "연한 갈색" },
-  { value: "#6B4226", name: "진한 갈색" },
+  { value: "#2B2B33", name: "Black" },
+  { value: "#FFFFFF", name: "White" },
+  { value: "#E5484D", name: "Red" },
+  { value: "#F76B15", name: "Orange" },
+  { value: "#FFC53D", name: "Yellow" },
+  { value: "#30A46C", name: "Green" },
+  { value: "#3E93DE", name: "Blue" },
+  { value: "#8E4EC6", name: "Purple" },
+  { value: "#F4A6C0", name: "Pink" },
+  { value: "#F6D3B3", name: "Peach" },
+  { value: "#B9825A", name: "Tan" },
+  { value: "#6B4226", name: "Brown" },
 ];
 
 const BRUSHES = [
-  { value: 6, name: "가는 붓" },
-  { value: 14, name: "보통 붓" },
-  { value: 28, name: "굵은 붓" },
+  { value: 6, name: "Thin brush" },
+  { value: 14, name: "Medium brush" },
+  { value: 28, name: "Thick brush" },
 ];
 
 interface Point {
@@ -140,7 +140,7 @@ export function DrawingPad({
       },
       () => {
         if (token === renderToken.current) {
-          onChange({ status: "failed", message: "그림을 이미지로 만들지 못했습니다. 다시 시도해 주세요." });
+          onChange({ status: "failed", message: "Could not turn your drawing into an image  Please try again" });
         }
       },
     );
@@ -214,7 +214,7 @@ export function DrawingPad({
         width={CANVAS_SIZE}
         height={CANVAS_SIZE}
         data-testid="avatar-draw-canvas"
-        aria-label="캐릭터를 그리는 캔버스. 키보드만 쓴다면 사진 넣기를 이용해 주세요."
+        aria-label="Canvas for drawing your character  Keyboard users can add a photo instead"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
@@ -222,9 +222,9 @@ export function DrawingPad({
         onLostPointerCapture={handlePointerEnd}
       />
 
-      {seedFailed && <p className={styles.problem}>저장된 그림을 이어 그릴 수 있게 불러오지 못했습니다. 저장된 외형은 그대로입니다.</p>}
+      {seedFailed && <p className={styles.problem}>Could not reload the saved drawing for editing  Your saved appearance is unchanged</p>}
 
-      <div className={styles.toolRow} role="group" aria-label="색">
+      <div className={styles.toolRow} role="group" aria-label="Color">
         {PAINTS.map((option) => (
           <button
             key={option.value}
@@ -240,7 +240,7 @@ export function DrawingPad({
           />
         ))}
         <label className={styles.customPaint}>
-          직접 고르기
+          Custom
           <input
             type="color"
             data-testid="avatar-pen-color"
@@ -254,7 +254,7 @@ export function DrawingPad({
       </div>
 
       <div className={styles.toolRow}>
-        <div className={styles.toolGroup} role="group" aria-label="붓 굵기">
+        <div className={styles.toolGroup} role="group" aria-label="Brush size">
           {BRUSHES.map((option) => (
             <button
               key={option.value}
@@ -269,13 +269,13 @@ export function DrawingPad({
           ))}
         </div>
         <Button variant={erasing ? "primary" : "secondary"} aria-pressed={erasing} onClick={() => setErasing((value) => !value)}>
-          지우개
+          Eraser
         </Button>
         <Button variant="ghost" disabled={operationCount === 0} onClick={undo}>
-          되돌리기
+          Undo
         </Button>
         <Button variant="ghost" onClick={clear}>
-          모두 지우기
+          Clear all
         </Button>
       </div>
     </div>

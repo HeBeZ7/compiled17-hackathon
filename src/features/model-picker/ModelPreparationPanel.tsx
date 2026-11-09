@@ -65,23 +65,23 @@ export function ModelPreparationPanel({ model }: { model: ModelReference }) {
       {preparation ? (
         <>
           <p className={styles.preparationLine}>
-            모델 파일 <StatusBadge tone={PREPARATION_VIEW[preparation.status].tone}>{PREPARATION_VIEW[preparation.status].label}</StatusBadge>
-            <span className={styles.muted}>{formatDateTime(preparation.updatedAt)} 기준</span>
+            Model files <StatusBadge tone={PREPARATION_VIEW[preparation.status].tone}>{PREPARATION_VIEW[preparation.status].label}</StatusBadge>
+            <span className={styles.muted}>As of {formatDateTime(preparation.updatedAt)}</span>
           </p>
           {preparation.location && (
             <p className={styles.muted}>
-              위치: {LOCATION_LABEL[preparation.location.kind]}
+              Location: {LOCATION_LABEL[preparation.location.kind]}
               {preparation.location.uri && ` · ${preparation.location.uri}`}
             </p>
           )}
           {preparation.statusReason && <p className={styles.muted}>{preparation.statusReason}</p>}
-          {pollError && <p className={styles.muted}>최신 상태를 확인하지 못해 마지막으로 확인한 상태를 보여 줍니다.</p>}
+          {pollError && <p className={styles.muted}>Could not get the latest state  Showing the last confirmed state</p>}
         </>
       ) : unsupported ? (
-        <p className={styles.muted}>이 모델은 파일 준비를 지원하지 않는 것으로 확인되었습니다.</p>
+        <p className={styles.muted}>File preparation is confirmed as unsupported for this model</p>
       ) : (
         <Button variant="secondary" disabled={requesting} onClick={() => void request()}>
-          {requesting ? "요청 중" : "모델 파일 준비 요청"}
+          {requesting ? "Requesting" : "Request model file preparation"}
         </Button>
       )}
       {requestError && <ConnectionNotice error={requestError} onRetry={() => void request()} />}

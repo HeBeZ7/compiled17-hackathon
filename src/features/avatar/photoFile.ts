@@ -19,16 +19,16 @@ export function sniffImageType(bytes: Uint8Array): AvatarMimeType | null {
 
 /** Returns what is wrong with the file, or null when it is worth decoding. */
 export function describePhotoProblem(file: { size: number }, header: Uint8Array): string | null {
-  if (file.size === 0) return "비어 있는 파일입니다. 다른 사진을 골라 주세요.";
+  if (file.size === 0) return "This file is empty  Please pick another photo";
   if (file.size > AVATAR_MAX_ORIGINAL_BYTES) {
-    return `사진은 ${Math.floor(AVATAR_MAX_ORIGINAL_BYTES / 1024 / 1024)}MB 이하만 넣을 수 있습니다.`;
+    return `Photos must be ${Math.floor(AVATAR_MAX_ORIGINAL_BYTES / 1024 / 1024)}MB or smaller`;
   }
-  if (!sniffImageType(header)) return "PNG, JPEG, WebP 사진만 넣을 수 있습니다.";
+  if (!sniffImageType(header)) return "Only PNG, JPEG and WebP photos can be used";
   return null;
 }
 
 export function describePhotoSizeProblem(width: number, height: number): string | null {
-  if (Math.min(width, height) < MIN_PHOTO_SIDE) return `사진이 너무 작습니다. 가로세로 ${MIN_PHOTO_SIDE}픽셀 이상이어야 합니다.`;
-  if (Math.max(width, height) > MAX_PHOTO_SIDE) return `사진이 너무 큽니다. 긴 변이 ${MAX_PHOTO_SIDE}픽셀 이하여야 합니다.`;
+  if (Math.min(width, height) < MIN_PHOTO_SIDE) return `This photo is too small  Each side must be at least ${MIN_PHOTO_SIDE} pixels`;
+  if (Math.max(width, height) > MAX_PHOTO_SIDE) return `This photo is too large  The long side must be at most ${MAX_PHOTO_SIDE} pixels`;
   return null;
 }
