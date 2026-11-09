@@ -1,0 +1,26 @@
+.stage {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100dvh;
+  overflow: hidden;
+  background: url("/assets/landing/poster.webp") center / cover no-repeat, linear-gradient(120deg, #fbf9f4, #e4f1fa 62%, #e4f4ec);
+}
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Keeps headline text readable over the room without hiding its depth. */
+.quiet {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(95deg, rgba(251, 249, 244, 0.94) 0%, rgba(251, 249, 244, 0.78) 30%, rgba(251, 249, 244, 0) 56%);
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .quiet {
+    background: linear-gradient(180deg, rgba(251, 249, 244, 0.96) 0%, rgba(251, 249, 244, 0.86) 40%, rgba(251, 249, 244, 0) 66%);
+  }
+}

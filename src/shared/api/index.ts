@@ -45,20 +45,20 @@ async function call<T>(schema: z.ZodType<T>, path: string, init: RequestInit = {
     body = await response.json();
   } catch (error) {
     if (init.signal?.reason instanceof DOMException && init.signal.reason.name === "TimeoutError") {
-      return fail("NETWORK_ERROR", "서버 응답이 너무 오래 걸립니다.", { retryable: true });
+      return fail("NETWORK_ERROR", "The server is taking too long to respond", { retryable: true });
     }
     if (init.signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
-      return fail("ABORTED", "요청이 취소되었습니다.");
+      return fail("ABORTED", "Request canceled");
     }
     if (error instanceof SyntaxError) {
-      return fail("INVALID_RESPONSE", "서버 응답을 해석하지 못했습니다.");
+      return fail("INVALID_RESPONSE", "The server response could not be read");
     }
-    return fail("NETWORK_ERROR", "서버에 연결하지 못했습니다.", { retryable: true });
+    return fail("NETWORK_ERROR", "Could not reach the server", { retryable: true });
   }
   const parsed = envelope.safeParse(body);
   if (!parsed.success) {
     console.error(`Contract mismatch on ${path}`, z.prettifyError(parsed.error));
-    return fail("INVALID_RESPONSE", "서버 응답 형식이 약속과 다릅니다.");
+    return fail("INVALID_RESPONSE", "The server response did not match the expected format");
   }
   return parsed.data as ServiceResult<T>;
 }

@@ -7,7 +7,7 @@ export const POST = handler(async ({ req, ctx }) => {
   try {
     form = await req.formData();
   } catch {
-    return fail("INVALID_REQUEST", "학습 자료 업로드 형식이 올바르지 않습니다.");
+    return fail("INVALID_REQUEST", "The dataset upload format is not valid");
   }
   return uploadDataset(form, ctx);
 });

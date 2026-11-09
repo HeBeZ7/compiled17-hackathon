@@ -9,10 +9,10 @@ export function StatusBadge({ tone, children }: { tone: StatusTone; children: Re
 }
 
 const CONNECTION_BADGE: Record<ConnectionState, { tone: StatusTone; label: string }> = {
-  connected: { tone: "ok", label: "연결됨" },
-  not_connected: { tone: "warn", label: "연결 필요" },
-  test_double: { tone: "danger", label: "테스트 대역" },
-  unknown: { tone: "unknown", label: "확인되지 않음" },
+  connected: { tone: "ok", label: "Connected" },
+  not_connected: { tone: "warn", label: "Not connected" },
+  test_double: { tone: "danger", label: "Test double" },
+  unknown: { tone: "unknown", label: "Unverified" },
 };
 
 export function ConnectionBadge({ state }: { state: ConnectionState }) {

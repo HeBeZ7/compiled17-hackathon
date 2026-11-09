@@ -10,7 +10,7 @@ export const CapabilityClaim = z.object({
 });
 export type CapabilityClaim = z.infer<typeof CapabilityClaim>;
 
-/** PRODUCT_SPEC §4 "모델". Each stage is claimed separately. */
+/** PRODUCT_SPEC section 4 model states. Each stage is claimed separately. */
 export const ModelCapabilities = z.object({
   listed: CapabilityClaim,
   accessible: CapabilityClaim,

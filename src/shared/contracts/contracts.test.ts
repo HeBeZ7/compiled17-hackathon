@@ -50,7 +50,7 @@ describe("contracts", () => {
   });
 
   it("marks an unwired service as not connected and non-retryable", () => {
-    const result = notConnected("GPU 학습");
+    const result = notConnected("GPU training");
     expect(result.error.code).toBe("NOT_CONNECTED");
     expect(result.error.retryable).toBe(false);
   });

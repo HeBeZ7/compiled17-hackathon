@@ -6,18 +6,18 @@ import { LearningPanel } from "@/features/learning";
 import { TeacherPanel } from "@/features/teacher";
 import type { ClassroomTarget } from "@/shared/contracts";
 import { selectMovementLocked, useAppStore } from "@/shared/state/appStore";
-import { ButtonLink, ConnectionNotice, StatusBadge } from "@/shared/ui";
+import { ButtonLink, ConnectionNotice } from "@/shared/ui";
 import styles from "./ClassroomScreen.module.css";
 
 // The game engine touches browser globals, so it must never run during server rendering.
 const Classroom = dynamic(() => import("@/features/classroom").then((module) => module.Classroom), {
   ssr: false,
-  loading: () => <p role="status">교실을 여는 중입니다.</p>,
+  loading: () => <p role="status">Opening the classroom</p>,
 });
 
 const PROXIMITY_HINT: Record<ClassroomTarget, string> = {
-  teacher: "선생님 곁에 있어요. 말을 걸 수 있습니다.",
-  study_spot: "학습 자리 곁에 있어요.",
+  teacher: "You are facing the teacher",
+  study_spot: "You are facing the learning station",
 };
 
 function isTextInput(element: Element | null): boolean {
@@ -59,28 +59,20 @@ export function ClassroomScreen() {
 
   return (
     <main className={styles.main}>
-      <div className={styles.status}>
+      <p className={styles.srOnly} role="status">
+        {nearby ? PROXIMITY_HINT[nearby] : ""}
+      </p>
+
+      <div className={styles.agentLink}>
         {agent ? (
-          <>
-            <p>
-              <strong>{agent.name}</strong>
-              <span className={styles.model}>{agent.selectedModel?.modelId ?? "모델 미선택"}</span>
-            </p>
-            <ButtonLink href="/create" variant="secondary">
-              모델·외형 바꾸기
-            </ButtonLink>
-          </>
+          <ButtonLink href="/create" variant="secondary">
+            Change model or look
+          </ButtonLink>
         ) : agentLoad === "ready" ? (
-          <>
-            <StatusBadge tone="unknown">에이전트 없이 둘러보는 중</StatusBadge>
-            <ButtonLink href="/create" variant="secondary">
-              에이전트 만들기
-            </ButtonLink>
-          </>
+          <ButtonLink href="/create" variant="secondary">
+            Create your agent
+          </ButtonLink>
         ) : null}
-        <p className={styles.hint} role="status">
-          {nearby ? PROXIMITY_HINT[nearby] : ""}
-        </p>
       </div>
 
       {agentLoad === "failed" && agentError && <ConnectionNotice error={agentError} onRetry={() => void loadAgent()} />}

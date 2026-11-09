@@ -1,29 +1,27 @@
 .main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--aa-space-4);
+  position: relative;
   width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: var(--aa-space-4);
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--aa-color-background);
 }
 
-.status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--aa-space-2) var(--aa-space-4);
-  min-height: 44px;
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.model {
-  margin-left: var(--aa-space-2);
-  color: var(--aa-color-ink-600);
-  font-size: 0.875rem;
-}
-
-.hint {
-  color: var(--aa-color-ink-600);
+/* Sits between the My agent and Classroom 01 HUD pills. */
+.agentLink {
+  position: absolute;
+  top: var(--aa-space-4);
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
 }
 
 .overlay {
@@ -33,5 +31,15 @@
   display: flex;
   justify-content: flex-end;
   padding: var(--aa-space-4);
-  background: rgba(35, 77, 74, 0.3);
+  background: rgba(17, 48, 58, 0.22);
+}
+
+@media (max-width: 720px) {
+  .agentLink {
+    top: 72px;
+  }
+
+  .overlay {
+    padding: var(--aa-space-2);
+  }
 }

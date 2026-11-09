@@ -8,13 +8,13 @@ import { StatusBadge, type StatusTone } from "./StatusBadge";
 function badgeFor(code: ApiErrorCode): { tone: StatusTone; label: string } {
   switch (code) {
     case "NOT_CONNECTED":
-      return { tone: "warn", label: "연결 필요" };
+      return { tone: "warn", label: "Not connected" };
     case "BLOCKED":
-      return { tone: "warn", label: "준비 필요" };
+      return { tone: "warn", label: "Needs setup" };
     case "STATUS_UNKNOWN":
-      return { tone: "unknown", label: "상태 불명" };
+      return { tone: "unknown", label: "Status unknown" };
     default:
-      return { tone: "danger", label: "문제 발생" };
+      return { tone: "danger", label: "Something went wrong" };
   }
 }
 
@@ -26,12 +26,12 @@ export function ConnectionNotice({ error, onRetry }: { error: ApiError; onRetry?
       <p>{error.message}</p>
       {error.requiredConfig.length > 0 && (
         <p className={styles.config}>
-          필요한 설정: <code>{error.requiredConfig.join(", ")}</code>
+          Required settings: <code>{error.requiredConfig.join(", ")}</code>
         </p>
       )}
       {onRetry && error.retryable && (
         <Button variant="secondary" onClick={onRetry}>
-          다시 시도
+          Try again
         </Button>
       )}
     </div>

@@ -33,7 +33,7 @@ export function CreateScreen() {
       ) : agentLoad === "ready" ? (
         <OnboardingFlow agent={agent} onComplete={handleComplete} />
       ) : (
-        <p role="status">에이전트를 불러오는 중입니다.</p>
+        <p role="status">Loading your agent</p>
       )}
     </main>
   );

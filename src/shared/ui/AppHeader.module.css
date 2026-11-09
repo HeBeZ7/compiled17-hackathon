@@ -7,14 +7,17 @@
   justify-content: space-between;
   gap: var(--aa-space-2) var(--aa-space-5);
   padding: var(--aa-space-3) var(--aa-space-4);
-  background: var(--aa-color-surface);
-  border-bottom: 2px solid var(--aa-color-line);
+  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid var(--aa-color-line);
+  backdrop-filter: blur(10px);
 }
 
 .brand {
-  color: var(--aa-color-primary-600);
+  color: var(--aa-color-ink-900);
   font-family: var(--aa-font-display);
   font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 

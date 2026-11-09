@@ -47,7 +47,7 @@ export function handler<P>(fn: (args: HandlerArgs<P>) => Promise<ServiceResult<u
       return result instanceof Response ? result : toResponse(result);
     } catch (error) {
       console.error(`Unhandled error in ${req.method} ${new URL(req.url).pathname}`, error);
-      return toResponse(fail("INTERNAL", "서버에서 문제가 발생했습니다.", { retryable: true }));
+      return toResponse(fail("INTERNAL", "Something went wrong on the server", { retryable: true }));
     }
   };
 }
@@ -57,7 +57,7 @@ export async function parseJson<S extends z.ZodType>(req: Request, schema: S): P
   try {
     body = await req.json();
   } catch {
-    return fail("INVALID_REQUEST", "요청 본문이 올바른 JSON이 아닙니다.");
+    return fail("INVALID_REQUEST", "The request body is not valid JSON");
   }
   return validate(schema, body);
 }
@@ -68,5 +68,5 @@ export function parseQuery<S extends z.ZodType>(req: Request, schema: S): Servic
 
 function validate<S extends z.ZodType>(schema: S, value: unknown): ServiceResult<z.output<S>> {
   const parsed = schema.safeParse(value);
-  return parsed.success ? ok(parsed.data) : fail("INVALID_REQUEST", "요청 내용이 약속된 형식과 다릅니다.");
+  return parsed.success ? ok(parsed.data) : fail("INVALID_REQUEST", "The request does not match the expected format");
 }

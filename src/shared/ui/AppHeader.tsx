@@ -4,9 +4,9 @@ import styles from "./AppHeader.module.css";
 export type AppStep = "intro" | "create" | "classroom";
 
 const STEPS: { id: AppStep; label: string }[] = [
-  { id: "intro", label: "소개" },
-  { id: "create", label: "에이전트 만들기" },
-  { id: "classroom", label: "교실" },
+  { id: "intro", label: "Welcome" },
+  { id: "create", label: "Create your agent" },
+  { id: "classroom", label: "Classroom" },
 ];
 
 export function AppHeader({ current }: { current: AppStep }) {
@@ -16,7 +16,7 @@ export function AppHeader({ current }: { current: AppStep }) {
       <Link href="/" className={styles.brand}>
         Agent Academy
       </Link>
-      <ol className={styles.steps} aria-label="진행 단계">
+      <ol className={styles.steps} aria-label="Progress">
         {STEPS.map((step, index) => (
           <li
             key={step.id}
