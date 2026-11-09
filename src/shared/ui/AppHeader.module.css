@@ -1,0 +1,59 @@
+.header {
+  position: relative;
+  z-index: var(--aa-z-header);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--aa-space-2) var(--aa-space-5);
+  padding: var(--aa-space-3) var(--aa-space-4);
+  background: var(--aa-color-surface);
+  border-bottom: 2px solid var(--aa-color-line);
+}
+
+.brand {
+  color: var(--aa-color-primary-600);
+  font-family: var(--aa-font-display);
+  font-size: 1.375rem;
+  text-decoration: none;
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aa-space-1) var(--aa-space-4);
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--aa-color-ink-600);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.step[data-state="current"] {
+  color: var(--aa-color-ink-900);
+  font-weight: 700;
+}
+
+.number {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--aa-radius-pill);
+  background: var(--aa-color-mint-100);
+  font-size: 0.75rem;
+}
+
+.step[data-state="current"] .number {
+  color: var(--aa-color-on-primary);
+  background: var(--aa-color-primary-600);
+}
+
+.step[data-state="done"] .number {
+  color: var(--aa-color-ok-text);
+  background: var(--aa-color-ok-bg);
+}

@@ -1,0 +1,15 @@
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-2);
+  padding: var(--aa-space-4);
+  background: var(--aa-color-mint-100);
+  border: 2px dashed var(--aa-color-line);
+  border-radius: var(--aa-radius-md);
+}
+
+.config {
+  color: var(--aa-color-ink-600);
+  font-size: 0.875rem;
+}

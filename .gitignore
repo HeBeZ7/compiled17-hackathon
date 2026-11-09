@@ -1,0 +1,28 @@
+# dependencies
+/node_modules
+
+# next.js (AA_DIST_DIR lets tests build beside the dev server)
+/.next/
+/.next-*/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# local persistent data — per worktree, never shared or committed
+/.data/
+
+# testing
+/coverage
+/test-results/
+/playwright-report/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*

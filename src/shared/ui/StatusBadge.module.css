@@ -1,0 +1,30 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--aa-space-3);
+  border-radius: var(--aa-radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.ok {
+  color: var(--aa-color-ok-text);
+  background: var(--aa-color-ok-bg);
+}
+
+.warn {
+  color: var(--aa-color-warn-text);
+  background: var(--aa-color-warn-bg);
+}
+
+.danger {
+  color: var(--aa-color-danger-text);
+  background: var(--aa-color-danger-bg);
+}
+
+.unknown {
+  color: var(--aa-color-unknown-text);
+  background: var(--aa-color-unknown-bg);
+}

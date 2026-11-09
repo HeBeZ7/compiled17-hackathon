@@ -1,0 +1,10 @@
+.flow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--aa-space-3);
+}
+
+.flow h1 {
+  font-size: 1.75rem;
+}

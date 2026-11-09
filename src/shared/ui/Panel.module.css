@@ -1,0 +1,7 @@
+.panel {
+  padding: var(--aa-space-5);
+  background: var(--aa-color-surface);
+  border: 2px solid var(--aa-color-line);
+  border-radius: var(--aa-radius-lg);
+  box-shadow: var(--aa-shadow-soft);
+}
