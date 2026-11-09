@@ -375,9 +375,9 @@ function trimmedBounds(image: CanvasImageSource, width: number, height: number):
 /**
  * Turns a user's image into a cut-out standee.
  *
- * A drawing keeps its own silhouette and gains a sticker border. A photo is
- * cover-cropped into a rounded portrait card, because a photo's rectangular
- * background would otherwise read as a floating box.
+ * A drawing keeps its own silhouette and gains a sticker border. A photo render
+ * already carries its own transparent background and white sticker outline, so
+ * it is drawn whole, with its aspect ratio kept and no crop or frame added.
  */
 export function paintAvatarStandee(image: HTMLImageElement, input: AvatarInput): HTMLCanvasElement {
   const { width, height, footX, footY } = STANDEE_FRAME;
@@ -388,20 +388,10 @@ export function paintAvatarStandee(image: HTMLImageElement, input: AvatarInput):
   const naturalH = image.naturalHeight;
 
   if (input === "photo") {
-    const cardW = Math.min(maxW, maxH * 0.84);
-    const cardH = maxH;
-    const cardX = footX - cardW / 2;
-    const cardY = footY - cardH;
-    const scale = Math.max(cardW / naturalW, cardH / naturalH);
-    const srcW = cardW / scale;
-    const srcH = cardH / scale;
-    roundedRect(ctx, cardX - 5, cardY - 5, cardW + 10, cardH + 10, 16);
-    outlined(ctx, PALETTE.white, 2.4);
-    ctx.save();
-    roundedRect(ctx, cardX, cardY, cardW, cardH, 12);
-    ctx.clip();
-    ctx.drawImage(image, (naturalW - srcW) / 2, (naturalH - srcH) / 2, srcW, srcH, cardX, cardY, cardW, cardH);
-    ctx.restore();
+    const scale = Math.min(maxW / naturalW, maxH / naturalH);
+    const drawW = naturalW * scale;
+    const drawH = naturalH * scale;
+    ctx.drawImage(image, footX - drawW / 2, footY - drawH, drawW, drawH);
     return canvas;
   }
 
