@@ -2,11 +2,12 @@
 
 import { Component, Suspense, useEffect, useRef, type ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import type { PerspectiveCamera } from "three";
+import type { Object3D, PerspectiveCamera } from "three";
+import { ClassroomWorld } from "@/shared/world/ClassroomWorld";
 import { PLAYER, SPAWN } from "@/shared/world/layout";
 import { QUALITY, type GraphicsQuality } from "@/shared/world/quality";
 import { AvatarFrame } from "./AvatarFrame";
-import { ClassroomWorld } from "./TemporaryBlockout";
+import { TemporaryFurniture } from "./TemporaryFurniture";
 import type { FirstPersonController } from "./controller";
 import { verticalFovForAspect } from "./movement";
 
@@ -34,11 +35,23 @@ function FirstPersonRig({ controller }: { controller: FirstPersonController }) {
   return null;
 }
 
-/** Sits inside the Suspense boundary, so its first frame means the world has loaded. */
+function containsMesh(object: Object3D): boolean {
+  let found = false;
+  object.traverse((child) => {
+    if ((child as { isMesh?: boolean }).isMesh) found = true;
+  });
+  return found;
+}
+
+/**
+ * ClassroomWorld keeps its own Suspense boundary, so readiness is taken from the
+ * scene: the world commits all at once, and overlays mark themselves notWorld.
+ */
 function ReadySignal({ onReady }: { onReady: () => void }) {
   const fired = useRef(false);
-  useFrame(() => {
+  useFrame((state) => {
     if (fired.current) return;
+    if (!state.scene.children.some((child) => !child.userData.notWorld && containsMesh(child))) return;
     fired.current = true;
     onReady();
   });
@@ -91,6 +104,7 @@ export function ClassroomCanvas({
         <FirstPersonRig controller={controller} />
         <Suspense fallback={null}>
           <ClassroomWorld quality={quality} />
+          <TemporaryFurniture />
           {avatarUrl && <AvatarFrame url={avatarUrl} onStatus={onAvatarStatus} />}
           <ReadySignal onReady={onReady} />
         </Suspense>

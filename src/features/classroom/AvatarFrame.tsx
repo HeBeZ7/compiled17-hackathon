@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { SRGBColorSpace, TextureLoader, type Texture } from "three";
 import { STUDENT_DESKS } from "@/shared/world/layout";
+import { TEMPORARY_DESK_TOP_Y } from "./TemporaryFurniture";
 
 export type AvatarFrameStatus = "none" | "loading" | "loaded" | "failed";
 
-// Meters. layout.ts has no desk height; must match the desk mesh.
-const DESK_TOP_Y = 0.74;
+// Meters. layout.ts has no desk height.
+const DESK_TOP_Y = TEMPORARY_DESK_TOP_Y;
 const PICTURE_MAX_WIDTH = 0.26;
 const PICTURE_MAX_HEIGHT = 0.32;
 const BORDER = 0.022;
@@ -75,24 +76,25 @@ export function AvatarFrame({
   const position: [number, number, number] = [desk.x + desk.w / 2 - 0.3, DESK_TOP_Y + outerH / 2, desk.z - 0.12];
 
   return (
-    <group position={position} rotation={[0, TURN_TO_AISLE, 0]} name="avatar-picture-frame">
+    <group position={position} rotation={[0, TURN_TO_AISLE, 0]} name="avatar-picture-frame" userData={{ notWorld: true }}>
       <group rotation={[TILT_BACK, 0, 0]}>
-        <mesh castShadow>
+        <mesh>
           <boxGeometry args={[outerW, outerH, FRAME_DEPTH]} />
-          <meshStandardMaterial color="#f2e4ce" roughness={0.65} />
+          <meshBasicMaterial color="#f2e4ce" toneMapped={false} />
         </mesh>
         <mesh position={[0, 0, FRAME_DEPTH / 2 + 0.0005]}>
           <planeGeometry args={[width, height]} />
-          <meshStandardMaterial color="#fbf9f4" roughness={0.9} />
+          <meshBasicMaterial color="#fbf9f4" toneMapped={false} />
         </mesh>
+        {/* Unlit so the room's lighting never darkens or tints the user's own picture. */}
         <mesh position={[0, 0, FRAME_DEPTH / 2 + 0.001]}>
           <planeGeometry args={[width, height]} />
-          <meshStandardMaterial map={picture.texture} transparent roughness={0.8} />
+          <meshBasicMaterial map={picture.texture} transparent toneMapped={false} />
         </mesh>
       </group>
-      <mesh position={[0, -0.01, -0.05]} rotation={[0.5, 0, 0]} castShadow>
+      <mesh position={[0, -0.01, -0.05]} rotation={[0.5, 0, 0]}>
         <boxGeometry args={[outerW * 0.3, outerH * 0.9, 0.008]} />
-        <meshStandardMaterial color="#f2e4ce" roughness={0.65} />
+        <meshBasicMaterial color="#f2e4ce" toneMapped={false} />
       </mesh>
     </group>
   );
