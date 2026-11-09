@@ -1,5 +1,6 @@
+import { writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { id, paths, playerShare, snap, solidPng, stubCatalog, waitClassroomReady } from "./support/app";
+import { colorBounds, id, paths, playerPng, playerShare, RUNWAY, snap, solidPng, stubCatalog, teleportTo, waitClassroomReady } from "./support/app";
 import { CATALOG_DOUBLE_MODEL } from "./support/fixtures";
 
 test.skip(!process.env.AA_QA_E2E, "제품 hook 통합 전 미실행. 대상 커밋 검증 때 AA_QA_E2E=1로 실행한다.");
@@ -92,6 +93,26 @@ test.describe("그림/사진 외형과 선택 모델 연결", () => {
     await page.waitForFunction(() => window.__AA_TEST__?.classroom?.ready() === true);
     expect((await snap(page)).agent.selectedModelId).toBe(MODEL);
     expect(await playerShare(page, CYAN)).toBeGreaterThan(0.1);
+  });
+
+  test("V6 실제 사진 입력으로 올린 사진이 교실에서 좌우가 잘리지 않고 둥근 전체로 보인다", async ({ page }, testInfo) => {
+    await start(page);
+    await uploadPhoto(page, "rgb(0,200,255)");
+    await confirmAndEnter(page);
+    expect((await snap(page)).agent.avatarSource).toBe("photo");
+    // 가구와 겹치지 않는 자리에서 잰다.
+    await teleportTo(page, RUNWAY);
+    await page.waitForTimeout(300);
+
+    const png = await playerPng(page);
+    await testInfo.attach("photo-in-classroom", { body: png, contentType: "image/png" });
+    writeFileSync(testInfo.outputPath("photo-in-classroom.png"), png);
+
+    // C의 render는 원형이다. 좌우가 잘리면 폭이 높이보다 작아진다(이전 카드 표시는 약 0.9).
+    const bounds = await colorBounds(page, png, CYAN);
+    expect(bounds.height, "사진이 교실에 보여야 비교가 의미 있다").toBeGreaterThan(30);
+    expect(bounds.width / bounds.height).toBeGreaterThan(0.96);
+    expect(bounds.width / bounds.height).toBeLessThan(1.04);
   });
 
   test("V5 해독할 수 없는 이미지는 오류를 보이고 성공 처리하지 않는다", async ({ page }) => {

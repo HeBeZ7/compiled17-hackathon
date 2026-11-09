@@ -148,6 +148,37 @@ export async function playerShare(page: Page, rgb: [number, number, number]) {
   return colorShare(page, png, rgb);
 }
 
+/** 특정 색 영역의 경계 상자 크기(px). 잡티를 무시하려고 3픽셀 이상 잡힌 행·열만 센다. */
+export async function colorBounds(page: Page, png: Buffer, rgb: [number, number, number]) {
+  return page.evaluate(async ([b64, [r, g, b]]) => {
+    const bytes = Uint8Array.from(atob(b64 as string), (c) => c.charCodeAt(0));
+    const bmp = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+    const c = new OffscreenCanvas(bmp.width, bmp.height).getContext("2d")!;
+    c.drawImage(bmp, 0, 0);
+    const d = c.getImageData(0, 0, bmp.width, bmp.height).data;
+    const columns = new Array<number>(bmp.width).fill(0);
+    const rows = new Array<number>(bmp.height).fill(0);
+    for (let i = 0; i < d.length; i += 4) {
+      if (Math.abs(d[i] - (r as number)) + Math.abs(d[i + 1] - (g as number)) + Math.abs(d[i + 2] - (b as number)) >= 60) continue;
+      const at = i / 4;
+      columns[at % bmp.width]++;
+      rows[Math.floor(at / bmp.width)]++;
+    }
+    const extent = (counts: number[]) => {
+      const hit = counts.flatMap((count, index) => (count >= 3 ? [index] : []));
+      return hit.length ? hit[hit.length - 1] - hit[0] + 1 : 0;
+    };
+    return { width: extent(columns), height: extent(rows) };
+  }, [png.toString("base64"), rgb] as const);
+}
+
+/** 플레이어가 그려진 화면 영역의 캡처. */
+export async function playerPng(page: Page) {
+  const canvas = await page.locator("canvas[data-game], canvas").first().boundingBox();
+  const s = await snap(page);
+  return page.screenshot({ clip: { x: canvas!.x + s.screen.x, y: canvas!.y + s.screen.y, width: s.screen.w, height: s.screen.h } });
+}
+
 /** 단색 PNG를 브라우저에서 만든다. 저장소에 바이너리 fixture를 두지 않는다. */
 export async function solidPng(page: Page, css: string) {
   const url = await page.evaluate((fill) => {
