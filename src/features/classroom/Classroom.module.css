@@ -2,7 +2,7 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  height: max(480px, calc(100dvh - 140px));
+  height: max(480px, 100dvh);
   overflow: hidden;
   border-radius: var(--aa-radius-lg);
   background: var(--aa-color-sky-100);
@@ -359,7 +359,7 @@
 /* Narrow layout: the talk button moves above the stick and character rows. */
 @media (max-width: 640px) {
   .root {
-    height: max(480px, calc(100dvh - 250px));
+    height: max(480px, 100dvh);
   }
 
   .topRight {
