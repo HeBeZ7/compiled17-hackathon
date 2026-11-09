@@ -99,6 +99,16 @@ describe.skipIf(!bindings.training)("[대역] 학습 수명주기 BUILD_PLAN §8
     expect(after.pollError).toBeTruthy();
   });
 
+  it("T19 조회 실패가 반복돼도 관측된 상태를 status_unknown으로 대체하지 않는다", async () => {
+    const run = await submitRunning();
+    for (let i = 0; i < 3; i++) {
+      h.provider.failNextPoll();
+      const after = await h.service.refresh(run.runId);
+      expect(after.status).toBe("running");
+      expect(after.pollError).toBeTruthy();
+    }
+  });
+
   it("T11 공급자의 실패 응답은 failed이고 trainingCompleted가 아니다", async () => {
     const run = await submitRunning();
     h.provider.setJob("failed");

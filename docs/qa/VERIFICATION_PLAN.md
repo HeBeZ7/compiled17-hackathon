@@ -23,7 +23,7 @@
 | 모델 변경 후 상담 문맥 | A-06, A-07 일부 | M1~M8 | FIXTURE | `tests/integration/teacher-context.test.ts` |
 | 가격 실패·미확인 값 | A-08 일부 | P1~P6, U1~U3 | FIXTURE | `tests/integration/pricing.test.ts`, `tests/e2e/learning-truth.spec.ts` |
 | 중복 학습 방지 | A-09~10 일부 | T1~T3, T5, U4 | FIXTURE | `tests/integration/training-lifecycle.test.ts`, `learning-truth` |
-| 실패·취소·불명·로드 실패 | A-09~11 일부 | T4, T6~T18, U5~U9 | FIXTURE | 위와 같음 |
+| 실패·취소·불명·로드 실패 | A-09~11 일부 | T4, T6~T19, U5~U9 | FIXTURE | 위와 같음 |
 | 대역 응답과 계약 일치 | 검증 기반 | 7건 | 계약 스키마 | `tests/integration/fixture-contract.test.ts` |
 
 FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 기준은 LIVE 증거가 필요하다.
@@ -46,7 +46,7 @@ FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 �
 
 | ID | 담당 | 요청 |
 | --- | --- | --- |
-| H-1 | A, B | 명시적 테스트 모드에서만 `window.__AA_TEST__.classroom`을 노출. `ready()`, `snapshot()`, `teleport(x, y)`, `remount()`. 기본 빌드에는 포함하지 않는다. |
+| H-1 | B | `NEXT_PUBLIC_AA_TEST_MODE`가 `"1"`일 때만 `window.__AA_TEST__.classroom`을 노출. `ready()`, `snapshot()`, `teleport(x, y)`, `remount()`. 기본 빌드에는 포함하지 않는다. (A가 webServer 설정 완료, `3da15f3`) |
 | H-2 | B | `snapshot()`: `footprint`(충돌 사각형, 월드 좌표 좌상단 기준), `world`, `obstacles`, `teacher`, `moving`, `paused`, `screen`(캔버스 기준 CSS px), `agent { agentId, selectedModelId, avatarSource }`. `teleport`는 footprint 좌상단 기준. |
 | H-3 | B | testid: `dpad-right`. 상호작용 키가 `E`가 아니면 알려 줄 것. |
 | H-4 | D | 대화창은 A의 smoke와 같은 역할 이름 `dialog "선생님 상담"`, `닫기` 버튼을 유지. testid: `teacher-input`, `price-panel`, `training-start`, `run-status`. |
@@ -54,8 +54,8 @@ FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 �
 | H-6 | A, D | `/create`, `/classroom`, API 경로는 초안에서 확인했다. 학습 패널은 교실 안 오버레이이므로, 특정 run을 표시한 상태로 진입하는 방법을 알려 줄 것. |
 | H-7 | E | 학습·가격 서비스에 공급자 어댑터를 주입할 수 있는 생성 함수. 재시작 흉내를 위해 저장 계층도 주입 가능해야 한다. |
 | H-8 | D | teacher 서비스에 LLM gateway 주입. 대기 중인 요청을 테스트에서 지연시킬 수 있어야 한다. |
-| H-9 | A | 계약 전환 없음. F는 A 설정이 읽는 `tests/integration`, `tests/e2e`를 쓴다. 다만 `tsconfig`가 `tests/**`를 포함하는지 확인해 줄 것. |
-| H-10 | A | 이 Codespace는 Chromium 시스템 라이브러리가 없다. `npx playwright install-deps chromium`을 적용하거나 F의 사용자 공간 우회를 유지할지 결정. |
+| H-9 | A | 해결. `tsconfig`의 `**/*.ts`가 `tests/**`를 포함한다. |
+| H-10 | A | 해결. A가 시스템 라이브러리를 설치했고 F worktree에서 우회 없이 e2e 통과를 확인했다. |
 
 ## 5. LIVE 필요 항목 (현재 미실행)
 
@@ -83,7 +83,7 @@ FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 �
 
 | ID | 담당 | 내용 |
 | --- | --- | --- |
-| O-1 | A | `TrainingRun.lastObservedAt`의 주석은 "Last status"인데 필드는 시각이다. 조회 실패 시 `status`를 유지하면 문제없지만 `status_unknown`으로 바꾸면 마지막 관측 상태를 잃는다. |
+| O-1 | E | A가 규칙을 고정했다(`3da15f3`). 조회 실패는 `status`를 유지하고 `pollError`만 설정한다. `status_unknown`은 생성 결과가 불명일 때만 쓰며 관측된 상태를 대체하지 않는다. T10, T19로 판정한다. |
 | O-2 | E | `PriceQuote.unitPrice`는 `nonnegative`라서 조회 실패를 0으로 돌려도 스키마를 통과한다. P1이 이를 막는다. |
 | O-3 | D | 가격 실패는 오류 봉투와 `freshness: fetch_failed` 견적의 두 형태로 올 수 있다. U1, U2가 둘 다 본다. |
 | O-4 | D, E | `LlmChatRequest`에 학생 모델 필드가 없어 프롬프트 문자열로만 전달된다. M1은 프롬프트에 modelId가 들어갔는지로 판정한다. |
