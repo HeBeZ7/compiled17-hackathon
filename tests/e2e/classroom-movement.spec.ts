@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeTeacher, enterClassroom, expectStopped, holdKeys, id, openTeacher, pause, snap, speed, teleport } from "./support/app";
+import { closeTeacher, enterClassroom, expectStopped, holdKeys, id, openTeacher, pause, RUNWAY, seedAgent, snap, speed, teleport, teleportTo } from "./support/app";
 
 test.skip(!process.env.AA_QA_E2E, "제품 hook 통합 전 미실행. 대상 커밋 검증 때 AA_QA_E2E=1로 실행한다.");
 
@@ -21,11 +21,9 @@ test.describe("교실 이동·충돌·입력 해제", () => {
   });
 
   test("C3 대각선 이동이 직선보다 빠르지 않다", async ({ page }) => {
-    const s = await snap(page);
-    const start = { x: s.world.w * 0.1, y: s.world.h * 0.1 };
-    await teleport(page, start.x, start.y);
+    await teleportTo(page, RUNWAY);
     const straight = await speed(page, ["ArrowRight"]);
-    await teleport(page, start.x, start.y);
+    await teleportTo(page, RUNWAY);
     const diagonal = await speed(page, ["ArrowRight", "ArrowDown"]);
     expect(diagonal).toBeLessThan(straight * 1.15);
   });
@@ -73,6 +71,9 @@ test.describe("교실 이동·충돌·입력 해제", () => {
   });
 
   test("C9 대화 입력 중 타이핑은 캐릭터를 움직이지 않고 글자가 그대로 들어간다", async ({ page }) => {
+    // 상담 입력창은 에이전트가 있어야 활성화된다.
+    await seedAgent(page);
+    await enterClassroom(page);
     await openTeacher(page);
     const before = await snap(page);
     const box = page.locator(id("teacher-input"));
@@ -96,13 +97,11 @@ test.describe("교실 이동·충돌·입력 해제", () => {
   });
 
   test("C11 교실 재진입 뒤에도 속도가 같다 (리스너 중복 확인)", async ({ page }) => {
-    const s = await snap(page);
-    const p = { x: s.world.w * 0.1, y: s.world.h * 0.1 };
-    await teleport(page, p.x, p.y);
+    await teleportTo(page, RUNWAY);
     const first = await speed(page, ["ArrowRight"]);
     await page.evaluate(() => window.__AA_TEST__!.classroom!.remount());
     await page.waitForFunction(() => window.__AA_TEST__?.classroom?.ready() === true);
-    await teleport(page, p.x, p.y);
+    await teleportTo(page, RUNWAY);
     const second = await speed(page, ["ArrowRight"]);
     expect(second).toBeLessThan(first * 1.3);
   });

@@ -47,13 +47,13 @@ FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 �
 | ID | 담당 | 요청 |
 | --- | --- | --- |
 | H-1 | B | `NEXT_PUBLIC_AA_TEST_MODE`가 `"1"`일 때만 `window.__AA_TEST__.classroom`을 노출. `ready()`, `snapshot()`, `teleport(x, y)`, `remount()`. 기본 빌드에는 포함하지 않는다. (A가 webServer 설정 완료, `3da15f3`) |
-| H-2 | B | `snapshot()`: `footprint`(충돌 사각형, 월드 좌표 좌상단 기준), `world`, `obstacles`, `teacher`, `moving`, `paused`, `screen`(캔버스 기준 CSS px), `agent { agentId, selectedModelId, avatarSource }`. `teleport`는 footprint 좌상단 기준. |
-| H-3 | B | testid: `dpad-right`. 상호작용 키가 `E`가 아니면 알려 줄 것. |
+| H-2 | B | 해결. 훅 형태는 요청과 같다. `teacher`는 선생님 충돌 상자의 좌상단이고, `teleport`는 벽·가구 안 좌표를 가장 가까운 빈 칸으로 옮긴다. |
+| H-3 | B | 해결. `dpad-right`, 상호작용 키는 E·Enter·Space. |
 | H-4 | D | 대화창은 A의 smoke와 같은 역할 이름 `dialog "선생님 상담"`, `닫기` 버튼을 유지. testid: `teacher-input`, `price-panel`, `training-start`, `run-status`. |
 | H-5 | C | testid: `model-option-<id>`, `agent-name`, `avatar-mode-drawing`, `avatar-mode-photo`, `avatar-pen-color`(색 입력), `avatar-draw-canvas`, `avatar-photo-input`, `avatar-preview`, `avatar-error`, `onboarding-confirm`. |
-| H-6 | A, D | `/create`, `/classroom`, API 경로는 초안에서 확인했다. 학습 패널은 교실 안 오버레이이므로, 특정 run을 표시한 상태로 진입하는 방법을 알려 줄 것. |
-| H-7 | E | 학습·가격 서비스에 공급자 어댑터를 주입할 수 있는 생성 함수. 재시작 흉내를 위해 저장 계층도 주입 가능해야 한다. |
-| H-8 | D | teacher 서비스에 LLM gateway 주입. 대기 중인 요청을 테스트에서 지연시킬 수 있어야 한다. |
+| H-6 | D | 해결. 학습 자리에서 패널을 열면 진행 중 run을 자동 표시하고, 끝난 run은 `내 학습 기록`에서 연다. |
+| H-7 | E | 제공됨. `createTrainingService`, `createPricingService`, `createArtifactService`. 통합 커밋에서 연결한다. |
+| H-8 | D | 제공됨. `askTeacherWith({ completeChat }, input, ctx)`. 통합 커밋에서 연결한다. |
 | H-9 | A | 해결. `tsconfig`의 `**/*.ts`가 `tests/**`를 포함한다. |
 | H-10 | A | 해결. A가 시스템 라이브러리를 설치했고 F worktree에서 우회 없이 e2e 통과를 확인했다. |
 
@@ -88,4 +88,5 @@ FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 �
 | O-3 | D | 가격 실패는 오류 봉투와 `freshness: fetch_failed` 견적의 두 형태로 올 수 있다. U1, U2가 둘 다 본다. |
 | O-4 | D, E | `LlmChatRequest`에 학생 모델 필드가 없어 프롬프트 문자열로만 전달된다. M1은 프롬프트에 modelId가 들어갔는지로 판정한다. |
 | O-5 | D | 늦은 응답 처리는 `requestId`와 `appStore` epoch의 클라이언트 동작이므로 M4는 서버 서비스만으로 연결할 수 없다. 스토어 또는 브라우저 수준에서 연결한다. |
+| O-7 | A | `appStore.loadAgent`에 시간 제한이 없다. 요청이 멈추면 `/create`가 `에이전트를 불러오는 중입니다.`에 머문다. 1회 관찰했고 재현되지 않았다. |
 | O-6 | A, D | "모델 변경 시 이전 결과 미호환"(M8)은 계약에 첨부 개념이 없다. `ModelArtifact.baseModel`로 다른 모델 결과를 제시하지 않는지로 재정의한다. |
