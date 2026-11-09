@@ -1,0 +1,91 @@
+# Agent Academy — F 검증 계획
+
+대상 독자: A~E 담당자. 기준: PRODUCT_SPEC 0.2, BUILD_PLAN 0.2.
+기반 커밋 `7a81abd`의 계약(`src/shared/contracts/`)에 맞췄다. `tests/support/ports.ts`의 포트와 testid는 F의 가정이며 제품 계약이 아니다.
+
+## 1. 증거 등급
+
+결과는 아래 등급을 섞어 보고하지 않는다. 낮은 등급의 통과로 높은 등급을 통과 처리하지 않는다.
+
+| 등급 | 의미 | 입증 범위 |
+| --- | --- | --- |
+| META | F의 참조 구현과 결함 주입 | 테스트의 탐지력만. 제품에 대해 아무것도 입증하지 않음 |
+| FIXTURE | 실제 제품 코드 + 공급자/네트워크 대역 | 제품 로직과 UI 표시 |
+| BROWSER | 실제 제품 + 실제 브라우저 조작 | 입력·화면·흐름. 공급자 연동은 입증하지 않음 |
+| LIVE | 실제 공급자 응답 | 해당 계정·조건의 실제 동작 |
+
+## 2. 사례 목록
+
+| 영역 | 수용 기준 | 사례 | 등급 | 파일 |
+| --- | --- | --- | --- | --- |
+| 이동·충돌·입력 해제 | A-01~03 | C1~C11 | BROWSER | `tests/e2e/classroom-movement.spec.ts` |
+| 외형과 모델 연결 | A-04 | V1~V5 | BROWSER | `tests/e2e/avatar-model-link.spec.ts` |
+| 모델 변경 후 상담 문맥 | A-06, A-07 일부 | M1~M8 | FIXTURE | `tests/integration/teacher-context.test.ts` |
+| 가격 실패·미확인 값 | A-08 일부 | P1~P6, U1~U3 | FIXTURE | `tests/integration/pricing.test.ts`, `tests/e2e/learning-truth.spec.ts` |
+| 중복 학습 방지 | A-09~10 일부 | T1~T3, T5, U4 | FIXTURE | `tests/integration/training-lifecycle.test.ts`, `learning-truth` |
+| 실패·취소·불명·로드 실패 | A-09~11 일부 | T4, T6~T18, U5~U9 | FIXTURE | 위와 같음 |
+| 대역 응답과 계약 일치 | 검증 기반 | 7건 | 계약 스키마 | `tests/integration/fixture-contract.test.ts` |
+
+FIXTURE 사례가 전부 통과해도 A-07~A-12는 통과가 아니다. 해당 기준은 LIVE 증거가 필요하다.
+
+## 3. A 통합 뒤 수동·추가 확인
+
+자동 사례로 판정하지 않는 항목이다. 대상 커밋에서 실제 브라우저로 확인해 스크린샷 경로를 남긴다.
+
+- 소개→선택→교실→상담이 끊기지 않는지 (A-13).
+- 1280×800과 390×844에서 글자·컨트롤·대화 패널 겹침이 없는지.
+- 사각형·이모지 임시 자산이 최종 화면에 남아 있지 않은지 (PRODUCT_SPEC §5).
+- 배경 그림 속 기본 캐릭터 위에 사용자 캐릭터가 겹쳐 보이지 않는지, 사진이 기본 캐릭터로 대체되지 않는지 (`docs/design/ART_DIRECTION.md`).
+- 실제 창 전환. headless C6은 `blur` 합성 이벤트라서 실제 OS 포커스 이동을 입증하지 않는다.
+- 한글 입력 상태의 WASD. IME 조합 중 keyCode가 229가 되어 이동이 안 될 수 있는데 Playwright로 재현할 수 없다.
+- 실제 터치 기기의 방향패드.
+
+## 4. 담당자 요청
+
+통합 전에 맞춰야 자동 사례를 실행할 수 있다. 이름이 달라도 되지만 그 경우 F에게 실제 이름을 알려 준다.
+
+| ID | 담당 | 요청 |
+| --- | --- | --- |
+| H-1 | A, B | 명시적 테스트 모드에서만 `window.__AA_TEST__.classroom`을 노출. `ready()`, `snapshot()`, `teleport(x, y)`, `remount()`. 기본 빌드에는 포함하지 않는다. |
+| H-2 | B | `snapshot()`: `footprint`(충돌 사각형, 월드 좌표 좌상단 기준), `world`, `obstacles`, `teacher`, `moving`, `paused`, `screen`(캔버스 기준 CSS px), `agent { agentId, selectedModelId, avatarSource }`. `teleport`는 footprint 좌상단 기준. |
+| H-3 | B | testid: `dpad-right`. 상호작용 키가 `E`가 아니면 알려 줄 것. |
+| H-4 | D | 대화창은 A의 smoke와 같은 역할 이름 `dialog "선생님 상담"`, `닫기` 버튼을 유지. testid: `teacher-input`, `price-panel`, `training-start`, `run-status`. |
+| H-5 | C | testid: `model-option-<id>`, `agent-name`, `avatar-mode-drawing`, `avatar-mode-photo`, `avatar-pen-color`(색 입력), `avatar-draw-canvas`, `avatar-photo-input`, `avatar-preview`, `avatar-error`, `onboarding-confirm`. |
+| H-6 | A, D | `/create`, `/classroom`, API 경로는 초안에서 확인했다. 학습 패널은 교실 안 오버레이이므로, 특정 run을 표시한 상태로 진입하는 방법을 알려 줄 것. |
+| H-7 | E | 학습·가격 서비스에 공급자 어댑터를 주입할 수 있는 생성 함수. 재시작 흉내를 위해 저장 계층도 주입 가능해야 한다. |
+| H-8 | D | teacher 서비스에 LLM gateway 주입. 대기 중인 요청을 테스트에서 지연시킬 수 있어야 한다. |
+| H-9 | A | 계약 전환 없음. F는 A 설정이 읽는 `tests/integration`, `tests/e2e`를 쓴다. 다만 `tsconfig`가 `tests/**`를 포함하는지 확인해 줄 것. |
+| H-10 | A | 이 Codespace는 Chromium 시스템 라이브러리가 없다. `npx playwright install-deps chromium`을 적용하거나 F의 사용자 공간 우회를 유지할지 결정. |
+
+## 5. LIVE 필요 항목 (현재 미실행)
+
+키·계정·승인이 필요하며 코드 문제와 별개다. 환경에 공급자 키가 없음을 2026-11-09에 확인했다.
+
+| 기준 | 필요 조건 |
+| --- | --- |
+| A-05 카탈로그 응답·모델 식별 | Hugging Face 등 실제 응답. 공개 읽기는 키 없이 가능할 수 있으므로 E 결과로 확인 |
+| A-07 선생님 실제 응답 | LLM 공급자 키 |
+| A-08 가격 근거 | 공급자 가격 출처와 조회 시각 |
+| A-09~10 실제 학습 | 사용자가 승인한 모델·자료·공급자·지역·비용 한도. F는 승인 없이 유료 작업을 실행하지 않는다 |
+| A-11 결과 로드 | 실제 학습 결과물 |
+| A-12 향상 주장 | 분리된 평가 자료. 주장하지 않으면 해당 없음 |
+
+## 6. 제품에 연결하는 방법
+
+1. `tests/support/bindings.product.ts`에서 실제 서비스를 연결한다. 비어 있는 동안 해당 스위트는 skipped로 나오며 통과가 아니다.
+2. `tests/e2e/support/app.ts`의 경로, 키, testid를 맞춘다.
+3. 대상 커밋에서 `npm run verify`와 `AA_QA_E2E=1 npm run test:e2e`를 실행한다. `AA_QA_E2E`가 없으면 F의 브라우저 스펙은 skipped다.
+4. 결과를 `docs/handoffs/F.md`에 대상 SHA와 함께 기록한다.
+
+## 7. 계약 초안 대조 결과
+
+코드를 바꾸지 않아도 되는 차이는 `tests/support/bindings.product.ts`에서 흡수한다. 아래는 담당자가 알아야 하는 항목이다.
+
+| ID | 담당 | 내용 |
+| --- | --- | --- |
+| O-1 | A | `TrainingRun.lastObservedAt`의 주석은 "Last status"인데 필드는 시각이다. 조회 실패 시 `status`를 유지하면 문제없지만 `status_unknown`으로 바꾸면 마지막 관측 상태를 잃는다. |
+| O-2 | E | `PriceQuote.unitPrice`는 `nonnegative`라서 조회 실패를 0으로 돌려도 스키마를 통과한다. P1이 이를 막는다. |
+| O-3 | D | 가격 실패는 오류 봉투와 `freshness: fetch_failed` 견적의 두 형태로 올 수 있다. U1, U2가 둘 다 본다. |
+| O-4 | D, E | `LlmChatRequest`에 학생 모델 필드가 없어 프롬프트 문자열로만 전달된다. M1은 프롬프트에 modelId가 들어갔는지로 판정한다. |
+| O-5 | D | 늦은 응답 처리는 `requestId`와 `appStore` epoch의 클라이언트 동작이므로 M4는 서버 서비스만으로 연결할 수 없다. 스토어 또는 브라우저 수준에서 연결한다. |
+| O-6 | A, D | "모델 변경 시 이전 결과 미호환"(M8)은 계약에 첨부 개념이 없다. `ModelArtifact.baseModel`로 다른 모델 결과를 제시하지 않는지로 재정의한다. |
