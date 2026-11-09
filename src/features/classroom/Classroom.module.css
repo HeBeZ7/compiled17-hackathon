@@ -1,23 +1,187 @@
 .root {
-  display: flex;
-  flex-direction: column;
-  gap: var(--aa-space-3);
-}
-
-.stage {
+  --world-aspect: 1200 / 780;
   position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
+  /* As wide as the column allows, but never so tall that the room needs scrolling. */
+  width: min(100%, calc((100dvh - 150px) * (1200 / 780)));
+  aspect-ratio: var(--world-aspect);
+  margin-inline: auto;
   overflow: hidden;
-  background: var(--aa-color-mint-100);
-  border: 4px solid var(--aa-color-line);
-  border-radius: var(--aa-radius-lg);
+  border-radius: 22px;
+  background: var(--aa-color-sky-100);
   box-shadow: var(--aa-shadow-raised);
+  font-family: var(--aa-font-body);
+  color: var(--aa-color-ink-900);
+  user-select: none;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
+.host {
+  position: absolute;
+  inset: 0;
+}
+
+.host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.notice {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--aa-shadow-soft);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.avatarError {
+  position: absolute;
+  left: 50%;
+  top: 52px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  max-width: calc(100% - 32px);
+  border-radius: 12px;
+  background: var(--aa-color-danger-bg);
+  color: var(--aa-color-danger-text);
+  font-size: 0.9rem;
+}
+
+.pad {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 124px;
+  height: 124px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--aa-color-line);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--aa-shadow-raised);
+  touch-action: none;
+  cursor: grab;
+}
+
+.pad[data-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The right-hand side of the stick: a stable target, not a separate control. */
+.padRight {
+  position: absolute;
+  top: 25%;
+  right: 0;
+  width: 40%;
+  height: 50%;
+}
+
+.knob {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 2px solid var(--aa-color-surface);
+  background: var(--aa-color-mint-500);
+  box-shadow: var(--aa-shadow-soft);
+  pointer-events: none;
+}
+
+.prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: inline-flex;
   align-items: center;
-  gap: var(--aa-space-3);
+  gap: 10px;
+  padding: 11px 20px;
+  border: 2px solid var(--aa-color-mint-200);
+  border-radius: 999px;
+  background: var(--aa-color-surface);
+  box-shadow: var(--aa-shadow-raised);
+  color: inherit;
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.prompt:active {
+  transform: translate(-50%, 2px);
+  box-shadow: var(--aa-shadow-pressed);
+}
+
+.key {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--aa-color-primary-600);
+  color: var(--aa-color-on-primary);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+  /* A phone gets a taller window onto the room and the camera follows the player. */
+  .root {
+    width: 100%;
+    aspect-ratio: auto;
+    height: min(calc(100dvh - 150px), 620px);
+    min-height: 320px;
+  }
+
+  .pad {
+    width: 104px;
+    height: 104px;
+    left: 12px;
+    bottom: 12px;
+  }
+
+  /* The right-hand side of the stick: a stable target, not a separate control. */
+.padRight {
+  position: absolute;
+  top: 25%;
+  right: 0;
+  width: 40%;
+  height: 50%;
+}
+
+.knob {
+    width: 46px;
+    height: 46px;
+  }
+
+  .prompt {
+    left: auto;
+    right: 12px;
+    bottom: 14px;
+    transform: none;
+    padding: 9px 14px;
+    font-size: 0.92rem;
+  }
+
+  .prompt:active {
+    transform: translateY(3px);
+  }
 }
