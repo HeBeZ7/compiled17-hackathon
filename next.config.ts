@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["*.app.github.dev"],
   // Lets Playwright run next dev beside a worker's own dev server without sharing .next.
   distDir: process.env.AA_DIST_DIR ?? ".next",
+  // An always-defined value lets the bundler drop test-only code from normal builds.
+  env: { NEXT_PUBLIC_AA_TEST_MODE: process.env.NEXT_PUBLIC_AA_TEST_MODE ?? "0" },
 };
 
 export default nextConfig;

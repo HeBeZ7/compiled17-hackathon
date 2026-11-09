@@ -61,10 +61,15 @@ export function ClassroomScreen() {
     <main className={styles.main}>
       <div className={styles.status}>
         {agent ? (
-          <p>
-            <strong>{agent.name}</strong>
-            <span className={styles.model}>{agent.selectedModel?.modelId ?? "모델 미선택"}</span>
-          </p>
+          <>
+            <p>
+              <strong>{agent.name}</strong>
+              <span className={styles.model}>{agent.selectedModel?.modelId ?? "모델 미선택"}</span>
+            </p>
+            <ButtonLink href="/create" variant="secondary">
+              모델·외형 바꾸기
+            </ButtonLink>
+          </>
         ) : agentLoad === "ready" ? (
           <>
             <StatusBadge tone="unknown">에이전트 없이 둘러보는 중</StatusBadge>

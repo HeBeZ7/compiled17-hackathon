@@ -19,6 +19,9 @@ interface AppState {
   setTextInputFocused: (focused: boolean) => void;
 }
 
+// A stalled request must end in a retryable error, not an endless loading screen.
+const AGENT_LOAD_TIMEOUT_MS = 20_000;
+
 // Bumped by every agent write so a slow load cannot overwrite a newer selection.
 let agentWriteEpoch = 0;
 
@@ -32,7 +35,7 @@ export const useAppStore = create<AppState>((set) => ({
   loadAgent: async () => {
     const epoch = ++agentWriteEpoch;
     set({ agentLoad: "loading", agentError: null });
-    const result = await api.agents.current();
+    const result = await api.agents.current(AbortSignal.timeout(AGENT_LOAD_TIMEOUT_MS));
     if (epoch !== agentWriteEpoch) return;
     if (result.ok) set({ agent: result.data.agent, agentLoad: "ready" });
     else set({ agentLoad: "failed", agentError: result.error });

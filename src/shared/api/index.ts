@@ -44,6 +44,9 @@ async function call<T>(schema: z.ZodType<T>, path: string, init: RequestInit = {
     const response = await fetch(path, { credentials: "same-origin", ...init });
     body = await response.json();
   } catch (error) {
+    if (init.signal?.reason instanceof DOMException && init.signal.reason.name === "TimeoutError") {
+      return fail("NETWORK_ERROR", "서버 응답이 너무 오래 걸립니다.", { retryable: true });
+    }
     if (init.signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
       return fail("ABORTED", "요청이 취소되었습니다.");
     }

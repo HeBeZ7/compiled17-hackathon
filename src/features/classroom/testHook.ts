@@ -17,11 +17,8 @@ type HookSource = {
   remount: () => void;
 };
 
-declare global {
-  interface Window {
-    __AA_TEST__?: { classroom?: unknown };
-  }
-}
+// Local view of the global. tests/e2e/support owns the typed global declaration.
+type TestWindow = { __AA_TEST__?: { classroom?: unknown } };
 
 export function installClassroomTestHook(source: HookSource): () => void {
   const { halfW, halfH } = MOVE_WORLD.footprint;
@@ -61,8 +58,9 @@ export function installClassroomTestHook(source: HookSource): () => void {
     },
   };
 
-  window.__AA_TEST__ = { ...window.__AA_TEST__, classroom: hook };
+  const testWindow = window as unknown as TestWindow;
+  testWindow.__AA_TEST__ = { ...testWindow.__AA_TEST__, classroom: hook };
   return () => {
-    if (window.__AA_TEST__?.classroom === hook) delete window.__AA_TEST__.classroom;
+    if (testWindow.__AA_TEST__?.classroom === hook) delete testWindow.__AA_TEST__.classroom;
   };
 }
