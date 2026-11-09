@@ -1,3 +1,40 @@
+# Agent Academy visual direction
+
+## Redesign
+
+Current visual target as of 2026-11-09  It supersedes the 2D layout and engine notes further down in this file  The bright palette and the custom avatar rules below remain in force
+
+| Screen | Reference | Path |
+| --- | --- | --- |
+| Landing | Immersive classroom entrance with headline left and teacher right | [landing-entrance.png](reference/landing-entrance.png) |
+| Model showroom | Family characters on glass-domed plinths with a detail panel | [model-showroom.png](reference/model-showroom.png) |
+| First-person classroom | Eye-level view down the rug to the teacher desk | [first-person-classroom.png](reference/first-person-classroom.png) |
+
+Each reference is an offline concept render  Interpret it for real-time rendering and never claim pixel-identical reproduction  Characters in the references are illustrative
+
+Defining qualities
+
+- Convincing depth and eye-level perspective
+- Rounded, carefully shaped furniture and characters
+- Distinct materials: fabric, ceramic, glass, painted wood and paper
+- Neutral daylight, soft contact shadows and controlled highlights
+- Bright ivory, mint, sky blue, lavender and coral
+- Strong typography, readable controls and deliberate spacing
+- Restrained motion that makes the world feel alive
+
+Rules
+
+- Concept images may be references or loading posters and are never playable geometry
+- Temporary cubes, flat cutouts and generic primitive characters are blockout assets only
+- Furniture has believable thickness, proportions and floor contact
+- Product UI copy is English with no sentence-ending periods
+- Coral is reserved for main calls to action with bold text of at least 19px
+- Display characters are illustrative and users still create their own avatar
+
+Asset inventory lives in [ASSETS.md](ASSETS.md)
+
+---
+
 # Agent Academy — 시각 제작 기준 v0.2
 
 2026-11-09 · 사용자 시각 피드백 반영 · 제품 요구는 [PRODUCT_SPEC.md](../PRODUCT_SPEC.md)가 우선한다.

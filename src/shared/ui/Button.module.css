@@ -31,13 +31,15 @@
 }
 
 .primary {
-  color: var(--aa-color-on-primary);
-  background: var(--aa-color-primary-600);
+  color: var(--aa-color-on-cta);
+  font-size: 1.1875rem;
+  font-weight: 700;
+  background: var(--aa-color-cta);
   box-shadow: var(--aa-shadow-soft);
 }
 
 .primary:not(:disabled):hover {
-  background: var(--aa-color-primary-700);
+  background: var(--aa-color-cta-hover);
 }
 
 .secondary {

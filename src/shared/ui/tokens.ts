@@ -1,28 +1,35 @@
 /**
  * Single source of design values. layout.tsx injects them as CSS variables
  * (color.mint100 -> --aa-color-mint-100) and Phaser reads them via phaserColor.
- * Palette follows docs/design/ART_DIRECTION.md. Pastels are decoration: never use them as body text.
+ * Palette follows docs/design/ART_DIRECTION.md section "Redesign". Pastels are decoration: never use them as body text.
  * Text/background pairs below were checked for at least 4.5:1 contrast.
  */
 export const color = {
   surface: "#FFFFFF",
-  background: "#FAFCF7",
-  line: "#D5E8DF",
-  ink900: "#234D4A",
-  ink600: "#4A6F6B",
-  primary600: "#356D60",
-  primary700: "#2A584D",
+  background: "#FBF9F4",
+  line: "#DDE6E1",
+  ink900: "#11303A",
+  ink600: "#4C626A",
+  // Small controls, focus and selected states.
+  primary600: "#2A6F66",
+  primary700: "#1F5750",
   onPrimary: "#FFFFFF",
-  mint100: "#E6F6EE",
-  mint200: "#BFE8D4",
+  // Main calls to action only, and only with bold text of at least 19px (3.8:1).
+  cta: "#E2524A",
+  ctaHover: "#CC433C",
+  onCta: "#FFFFFF",
+  mint100: "#E4F4EC",
+  mint200: "#BFE6D4",
   mint500: "#6FC7A5",
-  sky100: "#E4F2FB",
-  sky200: "#BEDFF3",
-  coral100: "#FDE8E8",
-  coral300: "#F3A3A6",
-  lavender200: "#D8C9F0",
-  // Pale birch: a small accent material only, never a whole wall or floor.
-  birch200: "#F0E6D6",
+  sky100: "#E4F1FA",
+  sky200: "#BBDDF2",
+  coral100: "#FDE8E6",
+  coral300: "#F6A6A0",
+  lavender100: "#EFE9FA",
+  lavender200: "#D9CCF2",
+  lavender500: "#9C84D8",
+  lavender700: "#5A3FA8",
+  birch200: "#F2E4CE",
   board600: "#3E8A78",
   okText: "#1F6B52",
   okBg: "#DFF5EA",
@@ -53,14 +60,14 @@ export const radius = {
 } as const;
 
 export const shadow = {
-  soft: "0 1px 2px rgba(35, 77, 74, 0.08), 0 8px 20px rgba(35, 77, 74, 0.08)",
-  raised: "0 2px 4px rgba(35, 77, 74, 0.10), 0 16px 32px rgba(35, 77, 74, 0.12)",
-  pressed: "0 1px 2px rgba(35, 77, 74, 0.14)",
+  soft: "0 1px 2px rgba(17, 48, 58, 0.08), 0 8px 20px rgba(17, 48, 58, 0.08)",
+  raised: "0 2px 4px rgba(17, 48, 58, 0.10), 0 16px 32px rgba(17, 48, 58, 0.12)",
+  pressed: "0 1px 2px rgba(17, 48, 58, 0.14)",
 } as const;
 
 export const font = {
-  display: '"Jua", "Gowun Dodum", system-ui, sans-serif',
-  body: '"Gowun Dodum", system-ui, sans-serif',
+  display: '"Plus Jakarta Sans Variable", system-ui, sans-serif',
+  body: '"Plus Jakarta Sans Variable", system-ui, sans-serif',
 } as const;
 
 export const z = {

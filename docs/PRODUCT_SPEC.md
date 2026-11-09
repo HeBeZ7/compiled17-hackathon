@@ -39,6 +39,32 @@
 | R-019 | 직접 이동 | 사용자가 캐릭터를 직접 움직인다. 페이지 스크롤이나 카메라 이동만으로 충족되지 않는다. |
 | R-020 | 제작 기준과 근거 관리 | 요구·추정·검증 상태를 구분한다. 데모 기획은 뒤로 둔다. |
 
+## 2A. Redesign requirements
+
+USER_CONFIRMED on 2026-11-09  These supersede earlier provisional choices of a 2D classroom or of keeping the renderer  R-018 single classroom and all earlier product behavior remain in force
+
+| ID | Requirement | Scope |
+| --- | --- | --- |
+| R-021 | Genuine 3D first-person classroom | Perspective camera at eye level with real scene geometry  A flat image, panorama, CSS perspective or scaled sprite scene does not qualify |
+| R-022 | First-person control | WASD and mouse look with explicit pointer capture, Escape to release, collision with solid furniture, stable speed across frame rates, touch move and look on touch devices |
+| R-023 | Teacher and learning station in the room | Proximity and targeting checks open the teacher dialog  A learning station is reachable in the same classroom |
+| R-024 | Dialog and input safety | A dialog releases pointer capture and stops movement  Typing never moves the camera  Closing never silently recaptures  Held input clears on blur, visibility change and pointer cancel |
+| R-025 | Immersive landing | Full-viewport entrance with real accessible wordmark, navigation, headline and CTA, restrained motion, reduced-motion support and a composed narrow layout |
+| R-026 | Interactive model showroom | Model families on physical display plinths with browse, search, detail and select  Uses real catalog identifiers and separates family from exact model and revision  Never limited to the concept's three models  No invented scores, prices or support claims  A usable DOM catalog alternative exists |
+| R-027 | User appearance preserved | Drawing and photo stay in the profile and character preview  Any mapping onto a 3D object is explicit  No default mascot replaces the user and no automatic 3D reconstruction is claimed |
+| R-028 | English product copy | All product UI copy is English with no sentence-ending periods |
+| R-029 | One visual world | Landing, model selection, character creation, classroom and dialogs read as one world as defined in docs/design/ART_DIRECTION.md |
+| R-030 | Adjustable graphics quality | Quality settings for weaker devices  Frame-rate figures are reported only when measured |
+
+Acceptance additions, judged separately from functional correctness
+
+| ID | Requirement | Evidence |
+| --- | --- | --- |
+| A-15 | R-021 to R-024 | Browser test of movement, look, collision, capture, release and input clearing on the exact final commit |
+| A-16 | R-025, R-026 | Browser evidence at desktop and narrow width with real catalog identifiers and the DOM alternative |
+| A-17 | R-029 | Screenshot comparison against the three references with remaining gaps listed  Pixel-identical reproduction is not a goal or a claim |
+| A-18 | R-030 | Measured performance with browser, device, viewport and quality settings recorded |
+
 ## 3. 최초 제작 경험
 
 소개 → 모델 탐색·선택 → 캐릭터 이름과 외형 제작 → 교실 입장 → 직접 이동 → 선생님 상담 → 학습 준비·가격 확인 → 실제 학습 상태 → 결과 사용 준비.
@@ -99,7 +125,7 @@
 
 기본 사각형과 이모지만으로 교실을 완성 처리하지 않는다. 초기 이동 검증용 자산을 썼다면 임시라고 기록하고, 공간·캐릭터·컨트롤의 최종 화면을 브라우저에서 확인한다. 다만 고급 그래픽 수준을 검증 없이 달성했다고 보고하지 않는다.
 
-정확한 2D/2.5D/3D, 카메라, 조작부, 엔진은 사용자 확정 사항이 아니다. BUILD_PLAN의 초기 선택으로 먼저 구현하고 변경 가능성을 보존한다.
+Superseded by section 2A for the classroom: it is 3D and first person  The specific engine remains an implementation choice recorded in BUILD_PLAN
 
 ## 6. 아직 확정하지 않은 확장
 

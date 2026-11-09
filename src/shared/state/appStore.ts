@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { api } from "@/shared/api";
 import type { AgentProfile, ApiError } from "@/shared/contracts";
+import type { GraphicsQuality } from "@/shared/world/quality";
 
 export type ClassroomOverlay = "none" | "teacher" | "learning";
 
@@ -12,11 +13,13 @@ interface AppState {
   agentError: ApiError | null;
   overlay: ClassroomOverlay;
   textInputFocused: boolean;
+  graphicsQuality: GraphicsQuality;
   loadAgent: () => Promise<void>;
   setAgent: (agent: AgentProfile) => void;
   openOverlay: (overlay: Exclude<ClassroomOverlay, "none">) => void;
   closeOverlay: () => void;
   setTextInputFocused: (focused: boolean) => void;
+  setGraphicsQuality: (quality: GraphicsQuality) => void;
 }
 
 // A stalled request must end in a retryable error, not an endless loading screen.
@@ -31,6 +34,7 @@ export const useAppStore = create<AppState>((set) => ({
   agentError: null,
   overlay: "none",
   textInputFocused: false,
+  graphicsQuality: "high",
 
   loadAgent: async () => {
     const epoch = ++agentWriteEpoch;
@@ -49,6 +53,7 @@ export const useAppStore = create<AppState>((set) => ({
   openOverlay: (overlay) => set({ overlay }),
   closeOverlay: () => set({ overlay: "none" }),
   setTextInputFocused: (textInputFocused) => set({ textInputFocused }),
+  setGraphicsQuality: (graphicsQuality) => set({ graphicsQuality }),
 }));
 
 export const selectMovementLocked = (state: AppState): boolean =>

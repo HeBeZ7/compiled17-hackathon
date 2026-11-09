@@ -200,3 +200,26 @@ A는 통합 후 `docs/coordination/STATUS.md` 하나에 다음을 수합한다. 
 제작에 필요한 운영 기록·테스트·앱 코드는 A~F가 실제 개발을 시작하면서 추가한다. 현재 존재하지 않는 경로를 이미 구현됐다고 해석하지 않는다.
 
 **진행 기록 (A, 2026-11-09):** A-0~A-2 수행. 기반 커밋 `7a81abd`, 역할별 경로는 [coordination/ASSIGNMENTS.md](coordination/ASSIGNMENTS.md), 제작 선택은 [coordination/DECISIONS.md](coordination/DECISIONS.md). 소유 경로는 §4에서 변경 없음. 이후 B~F를 통합했다. 실제 상태는 [coordination/STATUS.md](coordination/STATUS.md)를 따른다.
+
+## 11. Redesign implementation choices
+
+DESIGN_DRAFT  Product requirements live in PRODUCT_SPEC section 2A  Everything here is an implementation choice and replaces the matching rows in section 2
+
+| Area | Choice | Reason |
+| --- | --- | --- |
+| 3D renderer | three 0.187 with @react-three/fiber 9.8 and drei 10.7 | Stable with React 19.3 per its peer range  Phaser is removed once the 3D classroom lands |
+| Asset authoring | Blender 4.5 LTS scripted in Python, sources in assets-src, exported to glTF with meshopt | Reproducible authored meshes, rigs and baked lighting with no paid asset dependency |
+| Lighting | Baked lightmaps for the static room plus a small number of real-time lights | Soft contact shadows at low runtime cost |
+| Typography | Plus Jakarta Sans Variable, self-hosted | Closest strong rounded geometric match to the references |
+| Layout source | src/shared/world/layout.ts | One meter-based source for geometry, colliders and interaction points |
+
+Redesign ownership adds to section 4
+
+| Role | Additional paths |
+| --- | --- |
+| A | src/shared/world/** except layout content agreed with B, docs/design/** |
+| B | assets-src/classroom/**, public/assets/classroom/**, src/features/classroom/**, src/shared/world/ClassroomWorld* |
+| C | assets-src/showroom/**, public/assets/showroom/**, src/features/onboarding/**, src/features/model-picker/**, src/features/avatar/** |
+| D | src/features/teacher/**, src/features/learning/**, src/server/teacher/** |
+| F | tests/**, docs/qa/** |
+
