@@ -1,217 +1,214 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { INTERACTIONS, TEACHER } from "../../src/shared/world/layout";
 import {
+  STATION_SPOT,
+  TEACHER_SPOT,
+  TEACHER_TOO_FAR,
+  classroomRoot,
   closeTeacher,
-  colorShare,
   enterClassroom,
+  expectCleanCopy,
+  expectNoOverlap,
+  expectNoSideScroll,
+  expectOnTop,
   id,
-  learningDialog,
-  openTeacher,
-  pause,
-  paths,
-  playerShare,
-  seedAgent,
-  seedAvatarAgent,
-  snap,
-  STUDY_SPOT,
-  teacherDialog,
-  teleport,
-  teleportTo,
   INTERACT_KEY,
-  type Snapshot,
+  interactPrompt,
+  learningDialog,
+  lookPrompt,
+  myAgentPill,
+  openCharacterCard,
+  openTeacher,
+  paths,
+  pause,
+  place,
+  seedAgent,
+  snap,
+  stubCatalog,
+  teacherDialog,
+  walkUntil,
 } from "./support/app";
 
-test.skip(!process.env.AA_QA_E2E, "제품 hook 통합 전 미실행. 대상 커밋 검증 때 AA_QA_E2E=1로 실행한다.");
+test.skip(!process.env.AA_QA_E2E, "Not run without the product hook. Run with AA_QA_E2E=1 against the target commit.");
+test.describe.configure({ timeout: 60_000 });
 
-// 화면에 그려진 말풍선·버튼·가림이 실제 동작인지 본다. 카메라 좌표는 snapshot에서 역산한다.
-const MAGENTA: [number, number, number] = [255, 0, 170];
-const WHITE: [number, number, number] = [255, 255, 255];
-const STANDEE_WIDTH = 112;
-const STANDEE_FOOT = { x: 56, y: 124 };
-/** B의 ClassroomScene PROMPT_ANCHOR(말풍선 본체 중심)와 world.ts의 책상 값. 배치가 바뀌면 R4·O1이 실패한다. */
-const TEACHER_BUBBLE = { x: 804, y: 163 };
-const STUDENT_DESK = { x: 528, y: 474, w: 144, h: 46 };
-const DESK_SIDE_X = 512;
+const station = /Open learning station/;
 
-function toScreen(s: Snapshot, world: { x: number; y: number }) {
-  const scale = s.screen.w / STANDEE_WIDTH;
-  const actorX = s.footprint.x + s.footprint.w / 2;
-  const actorY = s.footprint.y + s.footprint.h / 2;
-  const viewX = actorX - STANDEE_FOOT.x - s.screen.x / scale;
-  const viewY = actorY - STANDEE_FOOT.y - s.screen.y / scale;
-  return { x: (world.x - viewX) * scale, y: (world.y - viewY) * scale, scale };
+const offsetFromTeacher = (angle: number, dist: number) => ({ x: TEACHER.x, z: TEACHER.z + dist, yaw: angle });
+
+async function expectNothingOpens(page: Page) {
+  await page.keyboard.press(INTERACT_KEY);
+  await pause(page, 300);
+  await expect(teacherDialog(page)).toBeHidden();
+  await expect(learningDialog(page)).toBeHidden();
 }
 
-async function bubbleWhiteShare(page: Page) {
-  const s = await snap(page);
-  const at = toScreen(s, TEACHER_BUBBLE);
-  const half = 16 * at.scale;
-  const canvas = (await page.locator("canvas").first().boundingBox())!;
-  const clip = { x: canvas.x + at.x - half, y: canvas.y + at.y - half, width: half * 2, height: half * 2 };
-  expect(clip.x, "말풍선 위치가 화면 밖").toBeGreaterThanOrEqual(0);
-  expect(clip.y, "말풍선 위치가 화면 밖").toBeGreaterThanOrEqual(0);
-  return colorShare(page, await page.screenshot({ clip }), WHITE);
-}
-
-const promptButton = (page: Page, name: RegExp) => page.getByRole("button", { name });
-
-function overlaps(a: { x: number; y: number; width: number; height: number }, b: typeof a) {
-  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-}
-
-async function expectNoOverlap(page: Page, items: Record<string, Locator>) {
-  const viewport = page.viewportSize()!;
-  const boxes: [string, NonNullable<Awaited<ReturnType<Locator["boundingBox"]>>>][] = [];
-  for (const [name, locator] of Object.entries(items)) {
-    await expect(locator, name).toBeVisible();
-    const box = (await locator.boundingBox())!;
-    expect(box.x, `${name} 왼쪽 넘침`).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width, `${name} 오른쪽 넘침`).toBeLessThanOrEqual(viewport.width);
-    boxes.push([name, box]);
-  }
-  for (let i = 0; i < boxes.length; i++) {
-    for (let j = i + 1; j < boxes.length; j++) {
-      expect(overlaps(boxes[i][1], boxes[j][1]), `${boxes[i][0]} ↔ ${boxes[j][0]} 겹침`).toBe(false);
-    }
-  }
-}
-
-async function expectOnTop(locator: Locator, name: string) {
-  await locator.scrollIntoViewIfNeeded();
-  const hit = await locator.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
-    return top === element || element.contains(top) || (top?.contains(element) ?? false);
-  });
-  expect(hit, `${name}이(가) 다른 요소에 가려짐`).toBe(true);
-}
-
-test.describe("말풍선·버튼의 실제 동작", () => {
+test.describe("teacher and learning station interaction", () => {
   test.beforeEach(async ({ page }) => { await enterClassroom(page); });
 
-  test("R1 선생님 근처 버튼을 누르면 실제 상담창이 열리고 멀어지면 버튼이 사라진다", async ({ page }) => {
-    const s = await snap(page);
-    const button = promptButton(page, /선생님과 이야기하기/);
-    await expect(button).toBeHidden();
+  test("R1 the prompt appears only in reach and aim and clicking it opens the real dialog", async ({ page }) => {
+    await expect(interactPrompt(page)).toBeHidden();
 
-    await teleport(page, s.teacher.x, s.teacher.y + 50);
-    await expect(button).toBeVisible();
-    await expect(page.locator(id("classroom"))).toHaveAttribute("data-near", "teacher");
+    await place(page, TEACHER_SPOT);
+    await expect(interactPrompt(page)).toHaveText("[E] Talk to your teacher");
+    await expect(classroomRoot(page)).toHaveAttribute("data-near", "teacher");
 
-    await button.click();
+    await interactPrompt(page).click();
     await expect(teacherDialog(page)).toBeVisible();
-    await expect(button).toBeHidden();
+    await expect(interactPrompt(page)).toBeHidden();
     expect((await snap(page)).paused).toBe(true);
     await closeTeacher(page);
 
-    await teleport(page, s.teacher.x, s.teacher.y + 130);
-    await expect(button).toBeHidden();
-    await expect(page.locator(id("classroom"))).toHaveAttribute("data-near", "");
+    await place(page, TEACHER_TOO_FAR);
+    await expect(interactPrompt(page)).toBeHidden();
+    await expect(classroomRoot(page)).toHaveAttribute("data-near", "");
   });
 
-  test("R2 학습 자리 근처 버튼을 누르면 실제 학습 패널이 열린다", async ({ page }) => {
-    await teleportTo(page, STUDY_SPOT);
-    await promptButton(page, /학습 자리 살펴보기/).click();
+  test("R2 the learning station prompt opens the real learning dialog", async ({ page }) => {
+    await place(page, STATION_SPOT);
+    await expect(interactPrompt(page)).toHaveText("[E] Open learning station");
+    await page.getByRole("button", { name: station }).click();
     await expect(learningDialog(page)).toBeVisible();
   });
 
-  test("R3 대상에서 멀 때 상호작용 키는 아무것도 열지 않는다", async ({ page }) => {
-    const s = await snap(page);
-    await teleport(page, s.teacher.x, s.teacher.y + 130);
+  test("R3 E opens nothing when no target is in reach and aim", async ({ page }) => {
+    await place(page, TEACHER_TOO_FAR);
+    await expectNothingOpens(page);
+  });
+
+  test("R5 the teacher needs both reach and aim, and each limit is enforced", async ({ page }) => {
+    const { reach, aim } = INTERACTIONS.teacher;
+
+    await place(page, offsetFromTeacher(0, reach - 0.1));
+    expect((await snap(page)).target, "just inside reach").toBe("teacher");
+
+    await place(page, offsetFromTeacher(0, reach + 0.1));
+    expect((await snap(page)).target, "just outside reach").toBeNull();
+    await expectNothingOpens(page);
+
+    await place(page, offsetFromTeacher(aim - 0.08, 1.5));
+    expect((await snap(page)).target, "just inside aim").toBe("teacher");
+
+    await place(page, offsetFromTeacher(aim + 0.08, 1.5));
+    expect((await snap(page)).target, "just outside aim").toBeNull();
+    await expectNothingOpens(page);
+
+    await place(page, offsetFromTeacher(Math.PI, 1.5));
+    expect((await snap(page)).target, "back turned").toBeNull();
+    await expectNothingOpens(page);
+
+    await place(page, offsetFromTeacher(0, 1.5), 1.2);
+    expect((await snap(page)).target, "looking at the ceiling").toBeNull();
+    await expectNothingOpens(page);
+  });
+
+  test("R6 the prompt disappears as soon as the player turns away", async ({ page }) => {
+    await place(page, TEACHER_SPOT);
+    await expect(interactPrompt(page)).toBeVisible();
+    await page.evaluate(() => window.__AA_TEST__!.classroom!.setLook(Math.PI, 0));
+    await expect(interactPrompt(page)).toBeHidden();
+  });
+
+  test("R7 the teacher can be reached on foot from the spawn point", async ({ page }) => {
+    await walkUntil(page, "KeyW", (p) => p.z <= -2.2);
+    const { position } = await snap(page);
+    const yaw = Math.atan2(-(TEACHER.x - position.x), -(TEACHER.z - position.z));
+    await page.evaluate((y) => window.__AA_TEST__!.classroom!.setLook(y, 0), yaw);
+    expect((await snap(page)).target).toBe("teacher");
     await page.keyboard.press(INTERACT_KEY);
-    await pause(page, 300);
-    await expect(teacherDialog(page)).toBeHidden();
-    await expect(learningDialog(page)).toBeHidden();
+    await expect(teacherDialog(page)).toBeVisible();
   });
 
-  test("R4 캔버스 말풍선은 배경 그림이 아니라 근접 상태에 따라 나타난다", async ({ page }) => {
-    await seedAvatarAgent(page, "rgb(255,0,170)");
-    await enterClassroom(page);
-    const s = await snap(page);
-
-    await teleport(page, s.teacher.x, s.teacher.y + 130);
-    await pause(page, 300);
-    const away = await bubbleWhiteShare(page);
-
-    await teleport(page, s.teacher.x, s.teacher.y + 50);
-    await pause(page, 300);
-    const near = await bubbleWhiteShare(page);
-
-    await teleport(page, s.teacher.x, s.teacher.y + 130);
-    await pause(page, 300);
-    const awayAgain = await bubbleWhiteShare(page);
-
-    expect(near).toBeGreaterThan(away + 0.2);
-    expect(awayAgain).toBeLessThan(near - 0.2);
+  test("R8 the learning station can be reached on foot from the spawn point", async ({ page }) => {
+    await walkUntil(page, "KeyW", (p) => p.z <= STATION_SPOT.z);
+    await page.evaluate(() => window.__AA_TEST__!.classroom!.setLook(-Math.PI / 2, 0));
+    await walkUntil(page, "KeyW", (p) => p.x >= 2.9);
+    expect((await snap(page)).target).toBe("study_spot");
+    await page.keyboard.press(INTERACT_KEY);
+    await expect(learningDialog(page)).toBeVisible();
   });
 });
 
-test.describe("가구 가림", () => {
-  test("O1 책상 뒤에 서면 책상이 캐릭터를 가리고 앞에 서면 가리지 않는다", async ({ page }) => {
-    await seedAvatarAgent(page, "rgb(255,0,170)");
+test.describe("HUD and dialog layout", () => {
+  test("N1 the HUD fits the screen and its controls do not overlap", async ({ page }) => {
     await enterClassroom(page);
-    const s = await snap(page);
-
-    await teleportTo(page, { x: DESK_SIDE_X, y: STUDENT_DESK.y - s.footprint.h - 2 });
-    await pause(page, 300);
-    const behind = await playerShare(page, MAGENTA);
-
-    await teleportTo(page, { x: DESK_SIDE_X, y: STUDENT_DESK.y + STUDENT_DESK.h + 2 });
-    await pause(page, 300);
-    const front = await playerShare(page, MAGENTA);
-
-    expect(front, "캐릭터가 식별되어야 비교가 의미 있다").toBeGreaterThan(0.2);
-    expect(behind).toBeLessThan(front * 0.92);
-  });
-});
-
-test.describe("조작부와 대화창 겹침", () => {
-  test("N1 교실 조작부·안내·상호작용 버튼이 겹치거나 화면을 넘지 않는다", async ({ page }) => {
-    await enterClassroom(page);
-    const s = await snap(page);
-    await teleport(page, s.teacher.x, s.teacher.y + 50);
+    await place(page, TEACHER_SPOT);
+    await expect(myAgentPill(page)).toContainText("My agent");
+    await expect(page.getByText("Classroom 01")).toBeVisible();
     await expectNoOverlap(page, {
-      "방향패드": page.locator(id("direction-pad")),
-      "상호작용 버튼": promptButton(page, /선생님과 이야기하기/),
-      "조작 안내": page.getByText("방향키 또는 WASD로 걸어보세요"),
+      "My agent pill": myAgentPill(page),
+      "room label": page.getByText("Classroom 01"),
+      "quality buttons": page.locator(id("classroom-quality")),
+      "look prompt": lookPrompt(page),
+      "interact prompt": interactPrompt(page),
+      "control hint": page.locator(id("classroom-hint")),
+      "My character button": page.locator(id("classroom-character-toggle")),
     });
-    await expectOnTop(promptButton(page, /선생님과 이야기하기/), "상호작용 버튼");
-    await expectOnTop(page.locator(id("dpad-right")), "방향패드");
+    await expectOnTop(interactPrompt(page), "interact prompt");
+    await expectOnTop(page.locator(id("classroom-character-toggle")), "My character button");
+    await expectNoSideScroll(page);
   });
 
-  test("N2 상담창의 입력·닫기가 가려지지 않고 가로로 넘치지 않는다", async ({ page }) => {
+  test("N2 the teacher dialog's input and Close are reachable and it fits the width", async ({ page }) => {
     await seedAgent(page);
     await enterClassroom(page);
     await openTeacher(page);
     const dialog = teacherDialog(page);
-    await expectOnTop(page.locator(id("teacher-input")), "상담 입력창");
-    await expectOnTop(dialog.getByRole("button", { name: "닫기" }), "닫기 버튼");
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await expectOnTop(page.locator(id("teacher-input")), "teacher input");
+    await expectOnTop(dialog.getByRole("button", { name: "Close" }), "Close");
+    await expect(dialog.getByRole("button", { name: "Send" })).toBeVisible();
+    await expectNoSideScroll(page);
     const box = (await dialog.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   });
 
-  test("N3 학습 패널의 닫기와 첫 입력이 가려지지 않고 가로로 넘치지 않는다", async ({ page }) => {
+  test("N3 the learning dialog's Close and steps are reachable and it fits the width", async ({ page }) => {
     await seedAgent(page);
     await enterClassroom(page);
-    await teleportTo(page, STUDY_SPOT);
+    await place(page, STATION_SPOT);
     await page.keyboard.press(INTERACT_KEY);
     const dialog = learningDialog(page);
     await expect(dialog).toBeVisible();
-    await expectOnTop(dialog.getByRole("button", { name: "닫기" }), "닫기 버튼");
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await expectOnTop(dialog.getByRole("button", { name: "Close" }), "Close");
+    for (const title of ["Training data", "Training method", "Price check", "Cost limit and conditions", "Training request"]) {
+      await expect(dialog.getByRole("region", { name: new RegExp(`· ${title}$`) })).toBeVisible();
+    }
+    await expectNoSideScroll(page);
     const box = (await dialog.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   });
 
-  test("N4 만들기 화면의 다음 단계 버튼이 가로로 넘치지 않는다", async ({ page }) => {
+  test("N4 the DOM catalog's next-step button fits the width", async ({ page }) => {
+    await stubCatalog(page);
     await page.goto(paths.onboarding);
-    const next = page.getByRole("button", { name: /다음/ });
+    await page.getByRole("button", { name: "List view" }).click();
+    const next = page.getByRole("button", { name: /^(Next: name and appearance|Continue without a model)$/ });
     await expect(next).toBeVisible();
     const box = (await next.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await expectNoSideScroll(page);
+  });
+
+  test("K4 the classroom HUD and character card use English copy with no sentence periods", async ({ page }) => {
+    await seedAgent(page);
+    await enterClassroom(page);
+    await place(page, TEACHER_SPOT);
+    await openCharacterCard(page);
+    await expectCleanCopy(page);
+  });
+
+  test("K5 the teacher and learning dialogs use English copy with no sentence periods", async ({ page }) => {
+    await seedAgent(page);
+    await enterClassroom(page);
+    await openTeacher(page);
+    await expectCleanCopy(page);
+    await closeTeacher(page);
+    await place(page, STATION_SPOT);
+    await page.keyboard.press(INTERACT_KEY);
+    await expect(learningDialog(page)).toBeVisible();
+    await expectCleanCopy(page);
   });
 });
