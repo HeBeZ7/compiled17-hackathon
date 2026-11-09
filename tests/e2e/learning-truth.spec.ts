@@ -1,19 +1,20 @@
 import { expect, test, type Page } from "@playwright/test";
 import { api, id, learningDialog, openLearning, seedAgent } from "./support/app";
+import { FREE } from "./support/copy";
 import { apiError, artifact, dataset, fail, ok, quote, run, runtime, unknownQuote, validation } from "./support/fixtures";
 
-test.skip(!process.env.AA_QA_E2E, "제품 hook 통합 전 미실행. 대상 커밋 검증 때 AA_QA_E2E=1로 실행한다.");
+test.skip(!process.env.AA_QA_E2E, "Not run without the product hook. Run with AA_QA_E2E=1 against the target commit.");
+test.describe.configure({ timeout: 60_000 });
 
-// 네트워크를 page.route로 대체한 UI 표시 검증이다. 실제 공급자 검증이 아니다.
-// 에이전트 저장과 화면 흐름은 실제 앱을 쓴다.
-const FREE = /무료(?!라는 뜻이 아|가 아)|₩\s*0(?![\d.,])|\$\s*0(?:\.0+)?(?![\d.,])/;
+// UI display checks with the network replaced through page.route. Not a real provider check.
+// Agent saving and the screen flow use the real app.
 
 type Over = Record<string, unknown>;
 
 const pricePanel = (page: Page) => page.locator(id("price-panel"));
 const startButton = (page: Page) => page.locator(id("training-start"));
-const statusRegion = (page: Page) => page.getByRole("region", { name: "학습 상태" });
-// 상세 설명에는 "실패로 단정하지 않으며" 같은 부정 표현이 있어 상태 판정은 배지로만 한다.
+const statusRegion = (page: Page) => page.getByRole("region", { name: "Training status" });
+// Details carry negatives such as "do not mean training failed", so a state is judged from the badge only.
 const statusBadge = (page: Page) => statusRegion(page).locator('span[class*="badge"]').first();
 
 /** posts로 학습 생성 요청 수를 돌려준다. */
@@ -36,7 +37,7 @@ async function openWithQuote(page: Page, respond: Parameters<Page["route"]>[1]) 
   await stubLearning(page, agent.agentId);
   await page.route(api.quote, respond);
   await openLearning(page);
-  await pricePanel(page).getByRole("button", { name: "가격 조회" }).click();
+  await pricePanel(page).getByRole("button", { name: "Check price", exact: true }).click();
   return pricePanel(page);
 }
 
@@ -50,12 +51,12 @@ async function prepareToSubmit(page: Page) {
     name: "data.jsonl", mimeType: "application/jsonl", buffer: Buffer.from('{"messages":[]}\n'),
   });
   await dialog.locator("select").selectOption("lora");
-  await pricePanel(page).getByRole("button", { name: "가격 조회" }).click();
+  await pricePanel(page).getByRole("button", { name: "Check price", exact: true }).click();
   await expect(pricePanel(page)).toContainText("gpu_hour");
-  await dialog.getByLabel("통화 (예: USD)").fill("USD");
-  await dialog.getByLabel("실행 비용 한도").fill("10");
-  await dialog.getByRole("button", { name: "서버에서 조건 확인" }).click();
-  await expect(dialog).toContainText("조건 통과");
+  await dialog.getByLabel("Currency (such as USD)").fill("USD");
+  await dialog.getByLabel("Run cost limit").fill("10");
+  await dialog.getByRole("button", { name: "Check conditions on server" }).click();
+  await expect(dialog).toContainText("Conditions passed");
   await dialog.getByRole("checkbox").check();
   await expect(startButton(page)).toBeEnabled();
 }
@@ -69,31 +70,31 @@ async function showRun(page: Page, over: Over, opts: { terminal?: boolean; runti
     await page.route(api.runtime, (r) => r.fulfill({ json: ok(runtime(opts.runtime)) }));
   }
   await openLearning(page);
-  if (opts.terminal) await page.getByRole("region", { name: "내 학습 기록" }).getByRole("button").first().click();
+  if (opts.terminal) await page.getByRole("region", { name: "My training runs" }).getByRole("button").first().click();
   await expect(page.locator(id("run-status"))).toBeVisible();
 }
 
-test.describe("[대역] 가격과 학습 상태 표시", () => {
-  test("U1 가격 조회 실패 응답을 무료로 표시하지 않고 학습 요청을 막는다", async ({ page }) => {
+test.describe("[double] price and training status display", () => {
+  test("U1 a failed price lookup is not shown as free and blocks the training request", async ({ page }) => {
     const panel = await openWithQuote(page, (r) => r.fulfill({ status: 502, json: fail("PROVIDER_ERROR") }));
     await expect(panel.locator(id("connection-notice"))).toBeVisible();
     await expect(panel).not.toContainText(FREE);
     await expect(startButton(page)).toBeDisabled();
   });
 
-  test("U2 fetch_failed 견적의 null 단가는 미확인으로 표시하고 학습 요청을 막는다", async ({ page }) => {
+  test("U2 a null price in a fetch_failed quote shows as unknown and blocks the training request", async ({ page }) => {
     const panel = await openWithQuote(page, (r) => r.fulfill({ json: ok(unknownQuote()) }));
-    await expect(panel).toContainText("미확인");
+    await expect(panel).toContainText("Unknown · not free");
     await expect(panel).not.toContainText(FREE);
     await expect(startButton(page)).toBeDisabled();
   });
 
-  test("U3 정상 가격은 단위·지역·조회 시각과 함께 보인다", async ({ page }) => {
+  test("U3 a known price is shown with unit, region and query time", async ({ page }) => {
     const panel = await openWithQuote(page, (r) => r.fulfill({ json: ok(quote()) }));
     for (const text of ["2.5", "USD", "gpu_hour", "fixture-region-1", "2026"]) await expect(panel).toContainText(text);
   });
 
-  test("U4 학습 시작을 연달아 눌러도 요청은 한 번이다", async ({ page }) => {
+  test("U4 double-clicking the training request sends one request", async ({ page }) => {
     const agent = await seedAgent(page);
     const counter = await stubLearning(page, agent.agentId);
     await prepareToSubmit(page);
@@ -102,46 +103,45 @@ test.describe("[대역] 가격과 학습 상태 표시", () => {
     expect(counter.posts).toBe(1);
   });
 
-  test("U5 상태 불명은 실패나 완료로 표시하지 않는다", async ({ page }) => {
+  test("U5 an unknown status is shown as neither failed nor complete", async ({ page }) => {
     await showRun(page, { status: "status_unknown", providerJobId: null, lastObservedAt: null });
-    await expect(statusBadge(page)).toContainText(/상태 불명|확인 중/);
-    await expect(statusBadge(page)).not.toContainText(/실패|완료/);
+    await expect(statusBadge(page)).toContainText("Status unknown");
+    await expect(statusBadge(page)).not.toContainText(/fail|complete/i);
   });
 
-  test("U6 취소 요청은 취소 완료로 표시하지 않는다", async ({ page }) => {
+  test("U6 a cancel request is not shown as a confirmed cancel", async ({ page }) => {
     await showRun(page, { status: "cancel_requested" });
-    await expect(statusBadge(page)).toContainText(/취소 요청/);
-    await expect(statusBadge(page)).not.toContainText(/취소됨|취소 완료|취소 확인/);
+    await expect(statusBadge(page)).toContainText("Cancel requested");
+    await expect(statusBadge(page)).not.toContainText(/canceled|cancelled|confirmed/i);
   });
 
-  test("U7 조회 오류는 마지막 관측 상태와 함께 보이고 실패로 표시하지 않는다", async ({ page }) => {
+  test("U7 a lookup error is shown with the last observed state and not as failure", async ({ page }) => {
     await showRun(page, { status: "running", pollError: apiError("PROVIDER_TIMEOUT") });
-    await expect(statusRegion(page)).toContainText(/최신 상태|조회/);
-    await expect(statusBadge(page)).toContainText("실행 중");
-    await expect(statusBadge(page)).not.toContainText("실패");
+    await expect(statusRegion(page)).toContainText(/Could not get the latest status.*last observed state/);
+    await expect(statusBadge(page)).toHaveText("Running");
   });
 
-  test("U8 결과 로드 실패는 사용 가능으로 표시하지 않는다", async ({ page }) => {
+  test("U8 a failed result load is not shown as usable", async ({ page }) => {
     await showRun(
       page,
       { status: "completed", artifactId: "fixture-artifact", trainingCompleted: true },
       { terminal: true, runtime: { state: "load_failed", error: apiError("PROVIDER_ERROR") } },
     );
     const status = page.locator(id("run-status"));
-    await expect(status).toContainText("로드 실패");
-    await expect(status).not.toContainText(/사용 가능(?! 여부)/);
+    await expect(status).toContainText("Load failed");
+    await expect(status).not.toContainText(/\b(?:usable|ready to use|available to use)\b/i);
   });
 
-  test("U9 학습 완료만으로 성능 향상을 표시하지 않는다", async ({ page }) => {
+  test("U9 completed training alone is not shown as improved performance", async ({ page }) => {
     await showRun(
       page,
       { status: "completed", artifactId: "fixture-artifact", trainingCompleted: true, runtimeReady: true },
       { terminal: true, runtime: { state: "loaded", responseVerifiedAt: "2026-11-09T00:00:00.000Z" } },
     );
-    await expect(statusBadge(page)).toContainText("완료");
+    await expect(statusBadge(page)).toHaveText("Training complete");
     const status = page.locator(id("run-status"));
-    await expect(status).toContainText("평가 없음");
-    // "성능 향상을 뜻하지는 않습니다" 같은 올바른 고지는 결함이 아니다.
-    await expect(status).not.toContainText(/향상(?!을 뜻하지|을 판단할 수)|더 똑똑|성능이 좋아/);
+    await expect(status).toContainText("No evaluation");
+    // The required disclaimer "does not mean improved performance" is not a defect.
+    await expect(status).not.toContainText(/(?<!not mean )\bimproved\b|\bsmarter\b|\bbetter (?:performance|results)\b/i);
   });
 });

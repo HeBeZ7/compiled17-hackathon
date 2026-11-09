@@ -12,10 +12,18 @@ export const ok = <D>(data: D) => ({ ok: true as const, data });
 
 /** 카탈로그 테스트 대역. E 병합 뒤 실제 카탈로그는 Hugging Face를 부르므로 결과가 고정되지 않는다. */
 export const CATALOG_DOUBLE_MODEL = "fixture-model-a";
+
+/** Exact models of one display family. The family name is derived from the id by the product, never sent by the catalog. */
+export const FAMILY_MODELS = [
+  { modelId: "fixture-org/Qwen-test-7B", revision: "aaaaaaaaaaaa1111111111111111" },
+  { modelId: "fixture-org/Qwen-test-13B", revision: null },
+] as const;
+export const OTHER_FAMILY_MODEL = "fixture-org/Otherfam-test-1";
+
 export const catalogPage = () => ({
   items: [{
     ref: { ...baseModel, modelId: CATALOG_DOUBLE_MODEL, licenseRef: "fixture-license" },
-    displayName: "[테스트 대역] fixture-model-a",
+    displayName: "[Test double] fixture-model-a",
     tags: ["test-double"],
     benchmarks: [] as unknown[],
   }],
@@ -26,8 +34,28 @@ export const catalogPage = () => ({
   fetchedAt: T,
 });
 
+const entry = (modelId: string, revision: string | null) => ({
+  ref: { ...baseModel, publisher: "fixture-org", modelId, revision, licenseRef: "fixture-license" },
+  displayName: `[Test double] ${modelId}`,
+  tags: ["test-double"],
+  benchmarks: [] as unknown[],
+});
+
+/** Catalog page for the showroom. Query matching stays in the double so a broken search is visible in the UI. */
+export const familyCatalogPage = (query: string) => {
+  const all = [...FAMILY_MODELS.map((m) => entry(m.modelId, m.revision)), entry(OTHER_FAMILY_MODEL, null)];
+  const q = query.trim().toLowerCase();
+  return {
+    items: q ? all.filter((e) => e.ref.modelId.toLowerCase().includes(q)) : all,
+    nextCursor: null as string | null,
+    source: "fixture",
+    freshness: "cached",
+    fetchedAt: T,
+  };
+};
+
 // 메시지는 일부러 중립적으로 둔다. 화면 판정이 대역 문구 때문에 통과하면 안 된다.
-export const apiError = (code: string) => ({ code, message: "대역 오류", retryable: true, requiredConfig: [] as string[] });
+export const apiError = (code: string) => ({ code, message: "Test double error", retryable: true, requiredConfig: [] as string[] });
 export const fail = (code: string) => ({ ok: false as const, error: apiError(code) });
 
 export const quote = (over: Record<string, unknown> = {}) => ({

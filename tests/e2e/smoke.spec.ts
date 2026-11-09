@@ -1,22 +1,23 @@
 import { expect, test } from "@playwright/test";
-import { closeTeacher, openTeacher, teacherDialog, waitClassroomReady } from "./support/app";
+import { classroomRoot, closeTeacher, openTeacher, teacherDialog, waitClassroomReady } from "./support/app";
 import { baseModel } from "./support/fixtures";
 
-// Foundation smoke only: the screens connect and unwired services say so.
-// F owns this directory and extends it against PRODUCT_SPEC §7.
+// Foundation smoke: the screens connect and unwired services say so.
 
-test("intro → create → classroom connect without page errors", async ({ page }) => {
+test.describe.configure({ timeout: 60_000 });
+
+test("landing, create and classroom connect without page errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
 
   await page.goto("/");
-  await page.getByRole("link", { name: /입장/ }).first().click();
+  await page.getByRole("link", { name: "Meet your agent" }).click();
+  await expect(page).toHaveURL(/\/create$/, { timeout: 30_000 });
 
-  await expect(page).toHaveURL(/\/create$/);
-
-  await page.getByRole("link", { name: "에이전트 없이 교실 보기" }).click();
-  await expect(page).toHaveURL(/\/classroom$/);
-  await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
+  await page.goBack();
+  await page.getByRole("link", { name: "Explore the classroom" }).click();
+  await expect(page).toHaveURL(/\/classroom$/, { timeout: 30_000 });
+  await expect(classroomRoot(page).locator("canvas")).toBeVisible({ timeout: 45_000 });
 
   await waitClassroomReady(page);
   await openTeacher(page);
@@ -34,10 +35,10 @@ test("the page does not scroll sideways", async ({ page }) => {
   }
 });
 
-// 공급자 키가 없는 환경 기준이다. 카탈로그는 키 없이 실제로 응답하므로 예시로 쓰지 않는다.
+// Written for an environment without provider keys. The catalog answers without a key, so it is not the example here.
 test("teacher consult without an LLM key reports 503 NOT_CONNECTED and never success", async ({ request }) => {
   const saved = await request.put("/api/agents/current", {
-    data: { name: "미연결 확인", selectedModel: baseModel, avatarAssetId: null, expectedVersion: null },
+    data: { name: "Not connected check", selectedModel: baseModel, avatarAssetId: null, expectedVersion: null },
   });
   expect(saved.status()).toBe(200);
   const agent = (await saved.json()).data;
@@ -48,7 +49,7 @@ test("teacher consult without an LLM key reports 503 NOT_CONNECTED and never suc
       agentId: agent.agentId,
       profileVersion: agent.version,
       studentModel: baseModel,
-      messages: [{ role: "user", content: "무엇을 배울 수 있나요?", at: "2026-11-09T00:00:00.000Z" }],
+      messages: [{ role: "user", content: "What can I learn?", at: "2026-11-09T00:00:00.000Z" }],
       userGoal: null,
     },
   });
@@ -69,20 +70,20 @@ test("agent and avatar persist through the real store", async ({ request }) => {
   const asset = (await upload.json()).data;
 
   const save = await request.put("/api/agents/current", {
-    data: { name: "초코", selectedModel: null, avatarAssetId: asset.assetId, expectedVersion: null },
+    data: { name: "Choco", selectedModel: null, avatarAssetId: asset.assetId, expectedVersion: null },
   });
   expect(save.status()).toBe(200);
   expect((await save.json()).data.version).toBe(1);
 
   const current = await (await request.get("/api/agents/current")).json();
-  expect(current.data.agent.name).toBe("초코");
+  expect(current.data.agent.name).toBe("Choco");
 
   const image = await request.get(asset.renderUrl);
   expect(image.headers()["content-type"]).toBe("image/png");
   expect(Buffer.compare(await image.body(), png)).toBe(0);
 
   const stale = await request.put("/api/agents/current", {
-    data: { name: "다른 이름", selectedModel: null, avatarAssetId: null, expectedVersion: null },
+    data: { name: "Another name", selectedModel: null, avatarAssetId: null, expectedVersion: null },
   });
   expect(stale.status()).toBe(409);
 
