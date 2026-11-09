@@ -27,6 +27,7 @@ npm run build
 E2E_PORT=<E2E 포트> npm run test:e2e    # 개발 서버와 동시에 실행 가능
 ```
 
+- 테스트 hook은 `process.env.NEXT_PUBLIC_AA_TEST_MODE === "1"` 분기 안에서만 노출한다. `npm run test:e2e`만 이 값을 켜고, 기본 실행과 빌드에서는 꺼져 있다.
 - 비밀키는 각 worktree의 gitignore된 `.env.local`에만 둔다. 추적 파일에 복사하지 않는다.
 - Next 16.4.5 API는 기억 대신 `node_modules/next/dist/docs/`로 확인한다.
 - 커밋은 자기 경로만 한다. 공통 변경 요청은 자기 `docs/handoffs/<역할>.md`에 적으면 A가 적용하고 SHA를 전달한다.
@@ -72,6 +73,7 @@ RUNTIME_VERIFIED, 이 Codespace 기준.
 - `npm run build`: 통합 위치에서 통과
 - `npm run test:e2e`: 통합 위치에서 8건 통과(데스크톱, 390px): 소개→생성→교실 이동, canvas 생성, 상담 패널 열고 닫기, 미연결 API의 503 `NOT_CONNECTED`, 에이전트·외형의 실제 저장, 오류 입력 거부
 - B·C worktree에서 개발 서버를 3001·3002로 동시에 실행, 각자 별도 `.data/aa.sqlite` 생성 확인
-- 미확인: F worktree에서의 e2e. 같은 폴더에서 이미 실행 중이던 다른 서버와 `.next-e2e` 잠금이 겹쳐 시작되지 못했다. 코드 결함이 아니라 동시 실행 충돌이며, 한 worktree에서는 e2e를 한 번에 하나만 실행한다.
+- F worktree의 e2e 8건: F가 자체 실행해 통과를 보고. A가 같은 시각에 돌린 실행은 F의 e2e와 `.next-e2e` 잠금이 겹쳐 시작되지 못했다. 한 worktree에서는 e2e를 한 번에 하나만 실행한다.
+- Chromium 시스템 라이브러리는 `playwright install-deps`로 이 Codespace에 설치되어 있다. `LD_LIBRARY_PATH` 우회가 필요 없다.
 
 아직 없는 것: 실제 캐릭터 이동, 모델 카탈로그, 외형 입력 화면, 선생님 응답, 가격 조회, GPU 학습. 모두 뼈대 또는 임시 화면이다. 수정 기준 이미지와의 비교는 이미지가 전달되지 않아 수행하지 못했다.
