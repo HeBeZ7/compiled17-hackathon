@@ -44,8 +44,8 @@ describe.skipIf(!bindings.teacher)("[대역] 모델 변경과 선생님 상담 �
     await pending;
     const s = h.session.state();
     expect(s.selectedModel.modelId).toBe(modelB.modelId);
-    const late = s.messages.filter((m) => m.text.includes("늦게 도착한 A 응답"));
-    expect(late.every((m) => m.studentModelId === modelA.modelId)).toBe(true);
+    // 모델이 바뀌면 새 상담이다. 이전 모델 답변이 새 대화에 끼어들면 안 된다.
+    expect(s.messages.some((m) => m.text.includes("늦게 도착한 A 응답"))).toBe(false);
   });
 
   it("M5 선생님의 대안 추천은 선택 모델을 자동으로 바꾸지 않는다", async () => {
@@ -70,7 +70,7 @@ describe.skipIf(!bindings.teacher)("[대역] 모델 변경과 선생님 상담 �
     expect(h.llm.requests).toHaveLength(0);
   });
 
-  it("M8 모델을 바꾸면 이전 모델의 학습 결과를 이어 붙이지 않는다", async () => {
+  it.skipIf(bindings.unsupported?.M8)("M8 모델을 바꾸면 이전 모델의 학습 결과를 이어 붙이지 않는다", async () => {
     h.session.attachArtifact("artifact-for-a");
     await h.session.selectModel(modelB);
     expect(h.session.state().attachedArtifactId).toBeNull();

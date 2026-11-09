@@ -20,7 +20,7 @@ describe.skipIf(!bindings.pricing)("[대역] 가격 조회와 미확인 값", ()
     expect(q.freshness).toBe("fetch_failed");
   });
 
-  it("P2 정상 조회는 공급자·지역·통화·단위·단가·시각·출처를 보존한다", async () => {
+  it.skipIf(bindings.unsupported?.P2)("P2 정상 조회는 공급자·지역·통화·단위·단가·시각·출처를 보존한다", async () => {
     h.source.respondLive(price);
     const q = await h.getQuote({ hours: null });
     expect(q).toMatchObject({

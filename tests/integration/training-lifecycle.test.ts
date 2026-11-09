@@ -150,7 +150,8 @@ describe.skipIf(!bindings.training)("[대역] 학습 수명주기 BUILD_PLAN §8
       h.provider.setArtifact("missing");
       const after = await h.service.refresh(run.runId);
       expect(after.status).toBe("verifying_artifact");
-      expect(after.trainingCompleted).toBe(false);
+      // trainingCompleted는 공급자의 완료 보고다. 결과물 확인(completed, artifactId)과 별개 사실이다.
+      expect(after.trainingCompleted).toBe(true);
       expect(after.artifactId).toBeNull();
     });
 

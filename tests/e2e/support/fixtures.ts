@@ -10,6 +10,22 @@ export const baseModel = {
 
 export const ok = <D>(data: D) => ({ ok: true as const, data });
 
+/** 카탈로그 테스트 대역. E 병합 뒤 실제 카탈로그는 Hugging Face를 부르므로 결과가 고정되지 않는다. */
+export const CATALOG_DOUBLE_MODEL = "fixture-model-a";
+export const catalogPage = () => ({
+  items: [{
+    ref: { ...baseModel, modelId: CATALOG_DOUBLE_MODEL, licenseRef: "fixture-license" },
+    displayName: "[테스트 대역] fixture-model-a",
+    tags: ["test-double"],
+    benchmarks: [] as unknown[],
+  }],
+  nextCursor: null as string | null,
+  source: "fixture",
+  // 대역이 실시간 조회처럼 보이지 않게 한다.
+  freshness: "cached",
+  fetchedAt: T,
+});
+
 // 메시지는 일부러 중립적으로 둔다. 화면 판정이 대역 문구 때문에 통과하면 안 된다.
 export const apiError = (code: string) => ({ code, message: "대역 오류", retryable: true, requiredConfig: [] as string[] });
 export const fail = (code: string) => ({ ok: false as const, error: apiError(code) });

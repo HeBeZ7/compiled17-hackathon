@@ -116,7 +116,11 @@ export interface TeacherPort {
 
 export interface TeacherHarness { llm: ScriptedLlm; session: TeacherPort }
 
+/** 제품에 대응 동작이 없어 연결할 수 없는 사례와 그 이유. 해당 사례는 skipped(미실행)로 나온다. */
+export type UnsupportedCase = "P2" | "M8";
+
 export interface Bindings {
+  unsupported?: Partial<Record<UnsupportedCase, string>>;
   training?: () => Promise<TrainingHarness>;
   pricing?: () => Promise<PricingHarness>;
   teacher?: (initial: ModelRef) => Promise<TeacherHarness>;

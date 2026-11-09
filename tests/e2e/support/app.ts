@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { baseModel } from "./fixtures";
+import { baseModel, catalogPage, ok } from "./fixtures";
 
 // 제품 UI와 맞물리는 지점은 이 파일 하나로 모은다. 경로·testid는 A/B/C/D 확정 후 조정한다.
 export const paths = { classroom: "/classroom", onboarding: "/create" };
@@ -10,6 +10,7 @@ export const api = {
   artifact: "**/api/artifacts/*",
   datasets: "**/api/training/datasets",
   validate: "**/api/training/validate",
+  catalogSearch: "**/api/catalog/models**",
 };
 export const INTERACT_KEY = "e";
 // B의 교실 배치(world.ts) 기준 좌표다. 교실 배치가 바뀌면 teleportTo 검사에서 바로 드러난다.
@@ -160,6 +161,10 @@ export async function solidPng(page: Page, css: string) {
   return Buffer.from(url.split(",")[1], "base64");
 }
 
+/** 카탈로그 검색만 대역으로 바꾼다. 저장·외형·교실은 실제 경로다. 실제 카탈로그 응답의 증거가 아니다. */
+export const stubCatalog = (page: Page) =>
+  page.route(api.catalogSearch, (route) => route.fulfill({ json: ok(catalogPage()) }));
+
 export const learningDialog = (page: Page) => page.getByRole("dialog", { name: "학습 준비" });
 
 /** 실제 저장 계층에 선택 모델이 있는 에이전트를 만든다. 쿠키는 page와 공유된다. */
@@ -169,6 +174,19 @@ export async function seedAgent(page: Page): Promise<{ agentId: string }> {
   });
   expect(res.status()).toBe(200);
   return (await res.json()).data;
+}
+
+/** 단색 외형을 실제 업로드 경로로 저장한다. 교실에서 픽셀로 식별하기 위한 입력이다. */
+export async function seedAvatarAgent(page: Page, css: string) {
+  const buffer = await solidPng(page, css);
+  const file = { name: "a.png", mimeType: "image/png", buffer };
+  const upload = await page.request.post("/api/avatars", { multipart: { inputKind: "drawing", original: file, render: file } });
+  expect(upload.status()).toBe(200);
+  const { assetId } = (await upload.json()).data;
+  const res = await page.request.put("/api/agents/current", {
+    data: { name: "검증용 학생", selectedModel: baseModel, avatarAssetId: assetId, expectedVersion: null },
+  });
+  expect(res.status()).toBe(200);
 }
 
 export async function openLearning(page: Page) {

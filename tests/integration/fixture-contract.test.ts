@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, ModelArtifact, PriceQuote, RuntimeStatus, TrainingDataset, TrainingRun, TrainingValidation } from "@/shared/contracts";
-import { apiError, artifact, dataset, quote, run, runtime, unknownQuote, validation } from "../e2e/support/fixtures";
+import { ApiError, CatalogPage, ModelArtifact, PriceQuote, RuntimeStatus, TrainingDataset, TrainingRun, TrainingValidation } from "@/shared/contracts";
+import { apiError, artifact, catalogPage, dataset, quote, run, runtime, unknownQuote, validation } from "../e2e/support/fixtures";
 
 // 브라우저 대역 응답이 계약을 벗어나면 클라이언트가 INVALID_RESPONSE로 처리해
 // 표시 검증이 엉뚱한 이유로 통과하거나 실패한다. 계약 변경을 여기서 잡는다.
@@ -16,6 +16,7 @@ describe("브라우저 대역 응답이 공통 계약을 따른다", () => {
     ["결과물", ModelArtifact, artifact()],
     ["학습 자료", TrainingDataset, dataset()],
     ["조건 확인", TrainingValidation, validation()],
+    ["카탈로그 페이지", CatalogPage, catalogPage()],
   ])("%s", (_name, schema, value) => {
     const result = (schema as { safeParse(v: unknown): { success: boolean; error?: unknown } }).safeParse(value);
     expect(result.error).toBeUndefined();
