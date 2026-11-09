@@ -23,7 +23,7 @@ const model: ModelReference = {
 };
 const agent: AgentProfile = {
   agentId: ID,
-  name: "초코",
+  name: "Choco",
   selectedModel: model,
   avatar: null,
   version: 2,
@@ -46,23 +46,23 @@ function line(role: "user" | "teacher", content: string, index = 0): ConsultLine
 
 describe("buildTeacherRequest", () => {
   it("carries the current model and version, and passes the shared contract", () => {
-    const request = buildTeacherRequest(agent, [line("user", "회의록 요약을 가르치고 싶어요")], ID);
+    const request = buildTeacherRequest(agent, [line("user", "I want to teach meeting note summaries")], ID);
     expect(request.studentModel?.modelId).toBe("acme/m");
     expect(request.profileVersion).toBe(2);
-    expect(request.userGoal).toBe("회의록 요약을 가르치고 싶어요");
+    expect(request.userGoal).toBe("I want to teach meeting note summaries");
     expect(TeacherRequest.safeParse(request).success).toBe(true);
   });
 
   it("stays within the contract for a very long reply and a long history", () => {
     const lines: ConsultLine[] = [];
     for (let index = 0; index < 150; index++) {
-      lines.push(line("user", "질문", index), line("teacher", "가".repeat(9000), index));
+      lines.push(line("user", "Question", index), line("teacher", "x".repeat(9000), index));
     }
-    lines.push(line("user", "마지막"));
+    lines.push(line("user", "Last"));
     const request = buildTeacherRequest(agent, lines, ID);
     expect(TeacherRequest.safeParse(request).success).toBe(true);
     expect(request.messages[0].role).toBe("user");
-    expect(request.messages.at(-1)?.content).toBe("마지막");
+    expect(request.messages.at(-1)?.content).toBe("Last");
   });
 });
 

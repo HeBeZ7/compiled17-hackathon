@@ -10,7 +10,7 @@ const DEFAULT_MAX_OUTPUT_TOKENS = 1024;
 
 export async function completeChat(input: LlmChatRequest, ctx: RequestContext): Promise<ServiceResult<LlmChatResponse>> {
   const modelId = process.env[TEACHER_MODEL_ENV];
-  if (!hasNebiusKey() || !modelId) return notConnected("선생님 모델", [NEBIUS_KEY_NAME, TEACHER_MODEL_ENV]);
+  if (!hasNebiusKey() || !modelId) return notConnected("Teacher model", [NEBIUS_KEY_NAME, TEACHER_MODEL_ENV]);
 
   const result = await nebiusChat({
     model: modelId,

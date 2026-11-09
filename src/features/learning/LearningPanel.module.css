@@ -1,18 +1,33 @@
+/* Ivory glass over the 3D canvas, matching TeacherPanel. */
 .shell {
   display: flex;
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
   min-height: 0;
   max-height: 100%;
 }
 
-.panel {
+.shell .panel {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: var(--aa-space-3);
   min-width: 0;
   min-height: 0;
+  background: color-mix(in srgb, var(--aa-color-background) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--aa-color-surface) 80%, transparent);
+  border-radius: calc(var(--aa-radius-lg) + 6px);
+  box-shadow: var(--aa-shadow-raised);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .shell .panel {
+    background: var(--aa-color-background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .head {
@@ -24,7 +39,17 @@
 }
 
 .head h2 {
-  font-size: 1.5rem;
+  color: var(--aa-color-ink-900);
+  font-family: var(--aa-font-display);
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+/* Focus lands here by script when the dialog opens; the title itself is not a control. */
+.head h2:focus {
+  outline: none;
 }
 
 .scroll {
@@ -35,6 +60,7 @@
   gap: var(--aa-space-4);
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .scroll > a {
@@ -49,9 +75,9 @@
   align-items: flex-start;
   gap: var(--aa-space-2);
   padding: var(--aa-space-4);
-  background: var(--aa-color-background);
-  border: 2px solid var(--aa-color-line);
-  border-radius: var(--aa-radius-md);
+  background: var(--aa-color-surface);
+  border: 1px solid var(--aa-color-line);
+  border-radius: var(--aa-radius-lg);
 }
 
 .pending {
@@ -60,7 +86,30 @@
 
 .step h3,
 .ledger h3 {
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.stepTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--aa-space-2);
+}
+
+.stepNumber {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--aa-color-lavender-700);
+  background: var(--aa-color-lavender-100);
+  border-radius: var(--aa-radius-pill);
+  font-size: 0.875rem;
+}
+
+.step > [data-testid="training-start"] {
+  align-self: stretch;
 }
 
 .help {
@@ -97,7 +146,13 @@
   font-weight: 400;
   background: var(--aa-color-surface);
   border: 2px solid var(--aa-color-line);
-  border-radius: var(--aa-radius-sm);
+  border-radius: var(--aa-radius-md);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--aa-color-lavender-500);
 }
 
 .row {
@@ -109,6 +164,7 @@
 
 .row .field {
   flex: 1 1 140px;
+  justify-content: flex-end;
   width: auto;
 }
 
@@ -247,8 +303,12 @@
   text-align: left;
   cursor: pointer;
   background: var(--aa-color-surface);
-  border: 2px solid var(--aa-color-line);
-  border-radius: var(--aa-radius-sm);
+  border: 1px solid var(--aa-color-line);
+  border-radius: var(--aa-radius-md);
+}
+
+.historyItem:hover {
+  background: var(--aa-color-mint-100);
 }
 
 .step > [data-testid="connection-notice"],
@@ -262,4 +322,25 @@
 .modelName {
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .shell .panel {
+    padding: var(--aa-space-4);
+    border-radius: var(--aa-radius-lg);
+  }
+
+  .head h2 {
+    font-size: 1.375rem;
+  }
+
+  .step,
+  .ledger,
+  .pending {
+    padding: var(--aa-space-3);
+  }
+
+  .buttons > button {
+    flex: 1 1 auto;
+  }
 }

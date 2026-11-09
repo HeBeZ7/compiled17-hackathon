@@ -2,6 +2,38 @@
 
 2026-11-09 · 브랜치 `aa/d-learning` · 기반 `7a81abd`
 
+## Redesign update (branch `aa/redesign-d`, base `7aa3347`, feature commit `9a9e357`)
+
+R-028 and R-029 for the teacher and learning dialogs  This supersedes the Korean labels named below
+
+Accessible names for F
+
+| Element | Before | Now |
+| --- | --- | --- |
+| Teacher dialog | 선생님 상담 | Talk to your teacher |
+| Learning dialog | 학습 준비 | Learning station |
+| Close button | 닫기 | Close |
+| Step regions | 1. 학습 자료 to 5. 학습 요청 | Step 1 · Training data, Step 2 · Training method, Step 3 · Price check, Step 4 · Cost limit and conditions, Step 5 · Training request |
+| Run regions | 학습 상태, 결과 상태, 내 학습 기록 | Training status, Result status, My training runs |
+| Price button | 가격 조회, 가격 다시 조회 | Check price, Check price again |
+| Validate button | 서버에서 조건 확인 | Check conditions on server |
+| Limit fields | 통화 (예: USD), 실행 비용 한도 | Currency (such as USD), Run cost limit |
+| Submit button | 실제 학습 요청 | Request real training |
+| Validation badge | 조건 통과, 준비 필요 | Conditions passed, Needs preparation |
+
+All `data-testid` values are unchanged  A null price renders `Unknown · not free`
+
+Verification
+
+- `npm run verify` passed on the feature commit
+- Chromium at 1280x800 and 390x844 through an uncommitted harness page over a concept image  Not the real classroom canvas, and opening from the classroom was not exercised
+- The real server path covered agent save and the teacher `NOT_CONNECTED` response  Teacher reply, price and run screens used `page.route` doubles
+- Checked: no input and control overlap, no horizontal scroll, Escape closes, blur off under `prefers-reduced-transparency`
+
+Requests for A
+
+- `src/shared/ui/ConnectionNotice.tsx` and the connection badge still show Korean inside these dialogs: 연결 필요, 준비 필요, 상태 불명, 문제 발생, 필요한 설정, 다시 시도, 테스트 대역
+
 ## 담당 요구와 기능 커밋
 
 R-011, R-012, R-013·R-014의 화면, BUILD_PLAN §8의 상태 표시를 담당한다.

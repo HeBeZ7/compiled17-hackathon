@@ -52,7 +52,7 @@ export function createArtifactService({ store, runtime }: ArtifactDeps) {
     return next;
   }
 
-  const missing = () => fail("NOT_FOUND", "학습 결과물을 찾을 수 없습니다.");
+  const missing = () => fail("NOT_FOUND", "Training artifact not found");
 
   return {
     async getArtifact(artifactId: string, ctx: RequestContext): Promise<ServiceResult<ModelArtifact>> {
@@ -73,8 +73,8 @@ export function createArtifactService({ store, runtime }: ArtifactDeps) {
     async loadArtifactRuntime(artifactId: string, ctx: RequestContext): Promise<ServiceResult<RuntimeStatus>> {
       const record = read(artifactId, ctx);
       if (!record) return missing();
-      if (!runtime.isConfigured()) return notConnected("결과 모델 실행", runtime.requiredConfig);
-      if (!record.artifact.existenceVerified) return fail("BLOCKED", "결과물 존재가 확인되지 않았습니다.");
+      if (!runtime.isConfigured()) return notConnected("Result model runtime", runtime.requiredConfig);
+      if (!record.artifact.existenceVerified) return fail("BLOCKED", "Artifact existence is not verified");
 
       const none = { responseVerifiedAt: null };
       const modelName = record.artifact.providerArtifactId;
@@ -86,14 +86,14 @@ export function createArtifactService({ store, runtime }: ArtifactDeps) {
         return ok(
           saveRuntime(
             record,
-            { ...none, state: "not_loaded", error: notConnected("결과 모델 실행").error },
+            { ...none, state: "not_loaded", error: notConnected("Result model runtime").error },
             ctx,
           ),
         );
       }
       if (listed.status === "validating") return ok(saveRuntime(record, { ...none, state: "loading", error: null }, ctx));
       if (listed.status === "error" || listed.status === "deleted") {
-        return ok(saveRuntime(record, { ...none, state: "load_failed", error: fail("PROVIDER_ERROR", "공급자가 이 모델을 사용할 수 없다고 보고했습니다.").error }, ctx));
+        return ok(saveRuntime(record, { ...none, state: "load_failed", error: fail("PROVIDER_ERROR", "The provider reported this model cannot be used").error }, ctx));
       }
 
       const probe = await runtime.chat(modelName, PROBE_MESSAGES, PROBE_MAX_TOKENS, ctx.signal);
@@ -104,9 +104,9 @@ export function createArtifactService({ store, runtime }: ArtifactDeps) {
     async runInference(input: InferenceRequest, ctx: RequestContext): Promise<ServiceResult<InferenceResponse>> {
       const record = read(input.artifactId, ctx);
       if (!record) return missing();
-      if (!runtime.isConfigured()) return notConnected("결과 모델 응답", runtime.requiredConfig);
+      if (!runtime.isConfigured()) return notConnected("Result model response", runtime.requiredConfig);
       if (record.runtime.state !== "loaded" || record.artifact.providerArtifactId === null) {
-        return fail("BLOCKED", "결과 모델이 아직 로드되지 않았습니다.");
+        return fail("BLOCKED", "The result model is not loaded yet");
       }
 
       const reply = await runtime.chat(record.artifact.providerArtifactId, input.messages, INFERENCE_MAX_TOKENS, ctx.signal);

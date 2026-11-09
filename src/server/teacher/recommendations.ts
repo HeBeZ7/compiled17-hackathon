@@ -54,14 +54,14 @@ function proposalOnly(now: string): Evidence {
     level: "ASSISTANT_PROPOSED",
     sourceUrl: null,
     checkedAt: now,
-    note: "선생님 모델의 제안입니다. 외부 근거로 확인되지 않았습니다.",
+    note: "Teacher model suggestion · not confirmed by external evidence",
   };
 }
 
 function excluded(modelId: string, reason: string): TeacherRecommendation {
   return {
     kind: "need_more_info",
-    summary: `대안 모델 ${modelId}은(는) 확인 가능한 근거가 없어 추천에서 제외했습니다.`,
+    summary: `Alternative model ${modelId} was excluded from recommendations because it has no verifiable evidence`,
     alternativeModel: null,
     evidence: [],
     limitations: reason,
@@ -83,7 +83,7 @@ function alternativeEvidence(entry: CatalogEntry): Evidence[] {
 function comparisonLimit(studentEntry: CatalogEntry | null, alternative: CatalogEntry): string | null {
   const student = new Set((studentEntry?.benchmarks ?? []).filter(isCitableBenchmark).map(comparisonKey));
   const comparable = alternative.benchmarks.filter(isCitableBenchmark).some((score) => student.has(comparisonKey(score)));
-  return comparable ? null : "현재 모델과 같은 조건에서 측정된 점수가 없어 두 모델의 성능을 직접 비교할 수 없습니다.";
+  return comparable ? null : "No score was measured under the same conditions as the current model so the two cannot be compared directly";
 }
 
 function joinLimits(...limits: (string | null | undefined)[]): string | null {
@@ -100,13 +100,13 @@ async function groundAlternative(
   const { source, modelId } = raw.alternativeModel;
 
   const lookup = await lookupCatalogEntry({ source, modelId }, ctx);
-  if (!lookup.ok) return excluded(modelId, `카탈로그에서 이 모델을 확인하지 못했습니다. (${lookup.error.code})`);
+  if (!lookup.ok) return excluded(modelId, `This model could not be confirmed in the catalog (${lookup.error.code})`);
 
   const alternative = lookup.data;
   if (student.model && isSameModel(alternative.ref, student.model)) return null;
 
   const evidence = alternativeEvidence(alternative);
-  if (evidence.length === 0) return excluded(modelId, "출처와 조건이 기록된 점수나 지원 근거가 없습니다.");
+  if (evidence.length === 0) return excluded(modelId, "No score with a recorded source and conditions and no support evidence");
 
   return {
     kind: "consider_alternative",

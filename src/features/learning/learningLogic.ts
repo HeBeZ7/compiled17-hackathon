@@ -22,27 +22,27 @@ export interface StatusCopy {
 }
 
 export const TRAINING_STATUS_COPY: Record<TrainingStatus, StatusCopy> = {
-  draft: { tone: "unknown", label: "초안", detail: "아직 학습을 요청하지 않았습니다." },
-  validating: { tone: "unknown", label: "조건 확인 중", detail: "서버가 학습 조건을 확인하고 있습니다." },
-  ready: { tone: "ok", label: "요청 가능", detail: "조건을 통과했지만 아직 학습을 요청하지 않았습니다." },
-  blocked: { tone: "warn", label: "준비 필요", detail: "조건이 충족되지 않아 학습을 시작할 수 없습니다." },
-  submitting: { tone: "unknown", label: "요청 전송 중", detail: "공급자에게 요청을 보내는 중입니다. 아직 접수가 확인되지 않았습니다." },
-  queued: { tone: "unknown", label: "대기 중", detail: "공급자가 접수했고 GPU 실행은 아직 시작되지 않았습니다." },
-  running: { tone: "ok", label: "실행 중", detail: "공급자가 실행 중이라고 보고했습니다." },
+  draft: { tone: "unknown", label: "Draft", detail: "Training has not been requested yet" },
+  validating: { tone: "unknown", label: "Checking conditions", detail: "The server is checking the training conditions" },
+  ready: { tone: "ok", label: "Ready to request", detail: "Conditions passed but training has not been requested yet" },
+  blocked: { tone: "warn", label: "Needs preparation", detail: "Conditions are not met so training cannot start" },
+  submitting: { tone: "unknown", label: "Sending request", detail: "Sending the request to the provider · acceptance is not confirmed yet" },
+  queued: { tone: "unknown", label: "Queued", detail: "The provider accepted it and GPU execution has not started yet" },
+  running: { tone: "ok", label: "Running", detail: "The provider reports it is running" },
   cancel_requested: {
     tone: "warn",
-    label: "취소 요청됨",
-    detail: "공급자가 확인하기 전까지 취소가 확정된 것이 아니며, 과금이 멈췄다고 볼 수 없습니다.",
+    label: "Cancel requested",
+    detail: "The cancellation is not confirmed until the provider acknowledges it · billing may not have stopped",
   },
-  canceled: { tone: "unknown", label: "취소 확인됨", detail: "공급자가 취소를 확인했습니다. 이미 발생한 비용은 공급자 청구를 확인해야 합니다." },
+  canceled: { tone: "unknown", label: "Cancel confirmed", detail: "The provider confirmed the cancellation · check the provider bill for costs already incurred" },
   status_unknown: {
     tone: "unknown",
-    label: "상태 불명",
-    detail: "요청 결과를 확인하지 못했습니다. 실패로 단정하지 않으며, 중복 실행을 막기 위해 자동으로 다시 요청하지 않습니다.",
+    label: "Status unknown",
+    detail: "The request outcome could not be confirmed · it is not treated as failed and is never resent automatically, to avoid a duplicate run",
   },
-  verifying_artifact: { tone: "unknown", label: "결과물 확인 중", detail: "공급자가 성공을 보고했지만 결과물은 아직 확인되지 않았습니다." },
-  completed: { tone: "ok", label: "학습 완료", detail: "결과물까지 확인되었습니다. 실제 사용 가능 여부와 성능은 아래 항목을 따로 확인하세요." },
-  failed: { tone: "danger", label: "실패", detail: "학습이 실패로 끝났습니다." },
+  verifying_artifact: { tone: "unknown", label: "Verifying artifact", detail: "The provider reported success but the artifact is not confirmed yet" },
+  completed: { tone: "ok", label: "Training complete", detail: "Artifact verified · check real use and performance separately below" },
+  failed: { tone: "danger", label: "Failed", detail: "Training ended in failure" },
 };
 
 const POLLED_STATUSES: readonly TrainingStatus[] = [
@@ -119,15 +119,15 @@ export function normalizeCurrency(text: string): string | null {
 }
 
 export const FRESHNESS_LABEL: Record<Freshness, string> = {
-  live: "방금 조회한 값",
-  cached: "저장된 값",
-  published_doc: "공개 문서 가격 · 실시간 재고나 확정 견적 아님",
-  fetch_failed: "조회 실패",
+  live: "Just queried",
+  cached: "Saved value",
+  published_doc: "Published docs price · not live stock or a firm quote",
+  fetch_failed: "Lookup failed",
 };
 
 export function formatAmount(value: number | null, currency: string | null): string {
-  if (value === null) return "미확인";
-  return `${value.toLocaleString("ko-KR", { maximumFractionDigits: 6 })} ${currency ?? "(통화 미확인)"}`;
+  if (value === null) return "Unknown · not free";
+  return `${value.toLocaleString("en-US", { maximumFractionDigits: 6 })} ${currency ?? "(currency unknown)"}`;
 }
 
 /** A price the user can approve: looked up successfully and actually known. Zero is a real value. */
@@ -173,20 +173,20 @@ export interface SubmitInput extends SpecInput {
 /** Empty means ready. The server still re-checks; this only prevents a request that cannot be approved. */
 export function submitBlockers(input: SubmitInput): string[] {
   const blockers: string[] = [];
-  if (!input.agent) blockers.push("에이전트가 필요합니다.");
-  else if (!input.agent.selectedModel) blockers.push("학생 모델을 선택해야 합니다.");
-  if (!input.dataset) blockers.push("학습 자료를 저장해야 합니다.");
-  else if (input.dataset.validation === "invalid") blockers.push("학습 자료 검증을 통과하지 못했습니다.");
-  if (!input.method) blockers.push("학습 방식을 골라야 합니다.");
-  if (!input.quote) blockers.push("가격을 조회해야 합니다.");
-  else if (!isPriceKnown(input.quote)) blockers.push("가격을 확인하지 못해 비용을 승인할 수 없습니다.");
+  if (!input.agent) blockers.push("An agent is required");
+  else if (!input.agent.selectedModel) blockers.push("Choose a student model");
+  if (!input.dataset) blockers.push("Save training data");
+  else if (input.dataset.validation === "invalid") blockers.push("Training data failed validation");
+  if (!input.method) blockers.push("Choose a training method");
+  if (!input.quote) blockers.push("Check the price");
+  else if (!isPriceKnown(input.quote)) blockers.push("Price is unconfirmed so the cost cannot be approved");
   if (normalizeCurrency(input.limitCurrency) === null || parsePositive(input.limitAmount) === null) {
-    blockers.push("비용 한도의 통화와 금액을 입력해야 합니다.");
+    blockers.push("Enter the cost limit currency and amount");
   }
-  if (input.validation?.status !== "ready") blockers.push("서버 조건 확인을 통과해야 합니다.");
-  if (!input.costApproved) blockers.push("비용 한도를 직접 승인해야 합니다.");
-  if (input.activeRun) blockers.push("아직 끝나지 않은 학습이 있습니다.");
-  if (input.hasPendingRequest || input.submitting) blockers.push("결과를 확인하지 못한 요청이 있습니다.");
+  if (input.validation?.status !== "ready") blockers.push("Pass the server conditions check");
+  if (!input.costApproved) blockers.push("Approve the cost limit yourself");
+  if (input.activeRun) blockers.push("A training run is still in progress");
+  if (input.hasPendingRequest || input.submitting) blockers.push("A request with an unknown outcome exists");
   return blockers;
 }
 
@@ -201,35 +201,35 @@ export function limitBelowEstimate(quote: PriceQuote | null, currencyText: strin
 }
 
 export function describeArtifact(artifact: ModelArtifact | null, artifactId: string | null): StatusCopy {
-  if (!artifactId) return { tone: "unknown", label: "결과물 없음", detail: "아직 연결된 결과물이 없습니다." };
-  if (!artifact) return { tone: "unknown", label: "확인 전", detail: "결과물 정보를 아직 받지 못했습니다." };
+  if (!artifactId) return { tone: "unknown", label: "No artifact", detail: "No artifact is linked yet" };
+  if (!artifact) return { tone: "unknown", label: "Not checked", detail: "Artifact details have not been received yet" };
   if (!artifact.existenceVerified) {
-    return { tone: "warn", label: "존재 미확인", detail: "공급자 응답은 있지만 실제 파일을 확인하지 못했습니다." };
+    return { tone: "warn", label: "Existence unverified", detail: "The provider responded but the actual file could not be confirmed" };
   }
-  return { tone: "ok", label: "결과물 확인됨", detail: `확인 시각 ${formatDateTime(artifact.verifiedAt)}` };
+  return { tone: "ok", label: "Artifact verified", detail: `Checked at ${formatDateTime(artifact.verifiedAt)}` };
 }
 
 export function describeRuntime(runtime: RuntimeStatus | null): StatusCopy {
-  if (!runtime) return { tone: "unknown", label: "확인 전", detail: "실행 상태를 아직 받지 못했습니다." };
+  if (!runtime) return { tone: "unknown", label: "Not checked", detail: "Runtime status has not been received yet" };
   switch (runtime.state) {
     case "not_loaded":
-      return { tone: "unknown", label: "로드 전", detail: "결과물이 있어도 아직 모델로 불러오지 않았습니다." };
+      return { tone: "unknown", label: "Not loaded", detail: "The artifact has not been loaded as a model yet" };
     case "loading":
-      return { tone: "unknown", label: "로드 중", detail: "모델을 불러오는 중입니다." };
+      return { tone: "unknown", label: "Loading", detail: "Loading the model" };
     case "load_failed":
-      return { tone: "danger", label: "로드 실패", detail: "학습 결과와 별개로 모델을 불러오지 못했습니다." };
+      return { tone: "danger", label: "Load failed", detail: "The model could not be loaded, separately from the training result" };
     case "unknown":
-      return { tone: "unknown", label: "상태 불명", detail: "실행 상태를 확인하지 못했습니다." };
+      return { tone: "unknown", label: "Status unknown", detail: "Runtime status could not be confirmed" };
     case "loaded":
       return runtime.responseVerifiedAt
-        ? { tone: "ok", label: "실제 응답 확인됨", detail: `응답 확인 ${formatDateTime(runtime.responseVerifiedAt)}. 성능 평가는 아닙니다.` }
-        : { tone: "warn", label: "로드됨 · 응답 미확인", detail: "로드는 되었지만 실제 응답을 아직 확인하지 못했습니다." };
+        ? { tone: "ok", label: "Real response verified", detail: `Response checked ${formatDateTime(runtime.responseVerifiedAt)} · not a performance evaluation` }
+        : { tone: "warn", label: "Loaded · response unverified", detail: "Loaded but a real response has not been confirmed yet" };
   }
 }
 
 export function describeTrainingOutcome(run: Pick<TrainingRun, "status" | "trainingCompleted">): StatusCopy {
-  if (run.trainingCompleted) return { tone: "ok", label: "공급자 완료 보고", detail: "공급자가 학습 완료를 보고했습니다." };
-  if (run.status === "failed") return { tone: "danger", label: "실패", detail: "학습이 끝나지 못했습니다." };
-  if (run.status === "canceled") return { tone: "unknown", label: "취소됨", detail: "학습이 완료되지 않았습니다." };
-  return { tone: "unknown", label: "완료 보고 없음", detail: "공급자의 완료 보고를 아직 받지 못했습니다." };
+  if (run.trainingCompleted) return { tone: "ok", label: "Provider reported complete", detail: "The provider reported training complete" };
+  if (run.status === "failed") return { tone: "danger", label: "Failed", detail: "Training did not finish" };
+  if (run.status === "canceled") return { tone: "unknown", label: "Canceled", detail: "Training did not complete" };
+  return { tone: "unknown", label: "No completion report", detail: "No completion report from the provider yet" };
 }

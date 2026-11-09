@@ -6,7 +6,7 @@ import { nebiusMethodsFor } from "@/server/training/nebiusModels";
 import { fail, ok, type PriceQuote, type PriceQuoteRequest, type RequestContext, type ServiceResult } from "@/shared/contracts";
 
 const NEBIUS_PRICES_URL = "https://tokenfactory.nebius.com/organization/prices";
-const NOT_PUBLISHED_NOTE = "공개 문서에서 Nebius 파인튜닝 토큰 단가를 확인하지 못했습니다. 무료라는 뜻이 아닙니다.";
+const NOT_PUBLISHED_NOTE = "The Nebius fine-tuning token price was not found in public docs · this does not mean free";
 
 export const TRAINING_PRICES_ENV = "NEBIUS_FINE_TUNING_USD_PER_1M_TOKENS_JSON";
 
@@ -42,7 +42,7 @@ export const operatorPriceProvider: PriceProvider = {
       currency: "USD",
       unit: "per_1m_training_tokens",
       sourceUrl: NEBIUS_PRICES_URL,
-      note: "운영자가 Nebius 콘솔에서 옮겨 적은 값입니다. 실시간 조회나 확정 견적이 아닙니다.",
+      note: "Value copied by an operator from the Nebius console · not a live lookup or a firm quote",
     };
   },
 };
@@ -55,11 +55,11 @@ export interface PricingDeps {
 export function createPricingService({ store, prices }: PricingDeps) {
   return {
     async getPriceQuote(input: PriceQuoteRequest, ctx: RequestContext): Promise<ServiceResult<PriceQuote>> {
-      if (input.provider !== null && input.provider !== prices.id) return fail("UNSUPPORTED", `가격을 조회할 수 없는 공급자입니다: ${input.provider}`);
+      if (input.provider !== null && input.provider !== prices.id) return fail("UNSUPPORTED", `Price lookup is not available for this provider: ${input.provider}`);
       const modelId = input.baseModel.modelId;
       const methods = nebiusMethodsFor(modelId);
       if (methods.length === 0 || (input.method !== null && !methods.includes(input.method))) {
-        return fail("UNSUPPORTED", "이 모델과 학습 방식은 연결된 공급자의 지원 목록에 없습니다.");
+        return fail("UNSUPPORTED", "This model and method are not on the connected provider's support list");
       }
 
       let price: TrainingPrice | null = null;
@@ -85,8 +85,8 @@ export function createPricingService({ store, prices }: PricingDeps) {
         sourceUrl: price?.sourceUrl ?? NEBIUS_PRICES_URL,
         freshness: price ? "published_doc" : "fetch_failed",
         cachedAt: null,
-        excludedCosts: ["결과 모델의 추론·배포 비용"],
-        notes: price?.note ?? (lookupFailed ? "가격 조회에 실패했습니다. 무료라는 뜻이 아닙니다." : NOT_PUBLISHED_NOTE),
+        excludedCosts: ["Inference and deployment costs of the result model"],
+        notes: price?.note ?? (lookupFailed ? "Price lookup failed · this does not mean free" : NOT_PUBLISHED_NOTE),
       };
       store.put(COLLECTIONS.priceCache, ctx.ownerId, quote.quoteId, quote);
       return ok(quote);

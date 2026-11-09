@@ -73,20 +73,20 @@ function CancelControl({ run }: { run: TrainingRun }) {
       {error && <ConnectionNotice error={error} />}
       {canCancel(run) && !confirming && (
         <Button variant="secondary" onClick={() => setConfirming(true)}>
-          학습 취소 요청
+          Request training cancellation
         </Button>
       )}
       {canCancel(run) && confirming && (
         <>
           <p className={styles.warn}>
-            취소를 요청해도 공급자가 확인하기 전까지 학습과 과금이 멈춘 것은 아닙니다. 이미 완료되었을 수도 있습니다.
+            A cancel request does not stop training or billing until the provider confirms it · the run may already be finished
           </p>
           <div className={styles.buttons}>
-            <Button onClick={() => void confirm()} disabled={busy}>
-              {busy ? "요청 중" : "취소 요청 보내기"}
+            <Button variant="secondary" onClick={() => void confirm()} disabled={busy}>
+              {busy ? "Sending" : "Send cancel request"}
             </Button>
             <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
-              계속 진행
+              Keep running
             </Button>
           </div>
         </>
@@ -103,35 +103,35 @@ export function RunStatusView({ run, agent, onBack }: { run: TrainingRun; agent:
   return (
     <div className={styles.run} data-testid="run-status" data-status={run.status}>
       <Button variant="ghost" onClick={onBack}>
-        학습 준비로 돌아가기
+        Back to learning station
       </Button>
 
-      <section className={styles.step} aria-label="학습 상태">
-        <h3>학습 상태</h3>
+      <section className={styles.step} aria-label="Training status">
+        <h3>Training status</h3>
         <StatusBadge tone={copy.tone}>{copy.label}</StatusBadge>
         <p>{copy.detail}</p>
-        {run.statusReason && <p className={styles.help}>사유: {run.statusReason}</p>}
+        {run.statusReason && <p className={styles.help}>Reason: {run.statusReason}</p>}
         <dl className={styles.facts}>
           <div className={styles.fact}>
-            <dt>기반 모델</dt>
+            <dt>Base model</dt>
             <dd>{run.spec.baseModel.modelId}</dd>
           </div>
           <div className={styles.fact}>
-            <dt>공급자</dt>
+            <dt>Provider</dt>
             <dd>{run.spec.provider}</dd>
           </div>
           <div className={styles.fact}>
-            <dt>공급자 작업 ID</dt>
-            <dd>{run.providerJobId ?? "아직 없음"}</dd>
+            <dt>Provider job ID</dt>
+            <dd>{run.providerJobId ?? "Not yet"}</dd>
           </div>
           <div className={styles.fact}>
-            <dt>비용 한도</dt>
+            <dt>Cost limit</dt>
             <dd>
-              {run.spec.costLimit.amount.toLocaleString("ko-KR")} {run.spec.costLimit.currency}
+              {run.spec.costLimit.amount.toLocaleString("en-US")} {run.spec.costLimit.currency}
             </dd>
           </div>
           <div className={styles.fact}>
-            <dt>마지막 관측</dt>
+            <dt>Last observed</dt>
             <dd>{formatDateTime(run.lastObservedAt)}</dd>
           </div>
         </dl>
@@ -139,11 +139,11 @@ export function RunStatusView({ run, agent, onBack }: { run: TrainingRun; agent:
         {(failure || run.pollError) && (
           <>
             <p className={styles.warn} role="status">
-              최신 상태를 가져오지 못했습니다. 위 내용은 마지막으로 관측한 상태이며, 학습 실패를 뜻하지 않습니다.
+              Could not get the latest status · the details above are the last observed state and do not mean training failed
             </p>
             <ConnectionNotice error={(failure ?? run.pollError) as ApiError} />
             <Button variant="secondary" onClick={checkNow}>
-              지금 다시 확인
+              Check again now
             </Button>
           </>
         )}
@@ -152,8 +152,8 @@ export function RunStatusView({ run, agent, onBack }: { run: TrainingRun; agent:
 
       {differentModel && (
         <p className={styles.warn} role="status">
-          이 학습의 기반은 {run.spec.baseModel.modelId}입니다. 현재 선택한 {agent?.selectedModel?.modelId}에는 자동으로 호환되지
-          않습니다.
+          This training is based on {run.spec.baseModel.modelId} · it is not automatically compatible with your current selection{" "}
+          {agent?.selectedModel?.modelId}
         </p>
       )}
 
